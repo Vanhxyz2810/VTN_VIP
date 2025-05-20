@@ -2261,6 +2261,491 @@ class QuanLyDien:
         
         input(self.center_text("\nNhấn Enter để tiếp tục..."))
     
+    def thong_ke_tieu_thu(self):
+        """Thống kê lượng điện tiêu thụ theo thời gian"""
+        self.clear_screen()
+        
+        # Hiển thị tiêu đề
+        self.display_centered_title("THỐNG KÊ LƯỢNG ĐIỆN TIÊU THỤ", 60)
+        
+        # Hiệu ứng loading
+        if HAS_RICH:
+            from rich.align import Align
+            from rich.panel import Panel
+            from rich.text import Text
+            from rich.table import Table
+            from rich.progress import Progress, SpinnerColumn, TextColumn
+            
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[bold yellow]Đang phân tích dữ liệu..."),
+                transient=True,
+            ) as progress:
+                task = progress.add_task("[yellow]Đang xử lý...", total=100)
+                for i in range(101):
+                    time.sleep(0.01)
+                    progress.update(task, completed=i)
+        else:
+            print(self.center_text("Đang thống kê lượng điện tiêu thụ..."))
+            time.sleep(0.8)
+        
+        # Lấy danh sách tất cả hóa đơn
+        hoa_don_list = self.db.get_all_hoa_don()
+        
+        if not hoa_don_list:
+            if HAS_RICH:
+                console.print(Align.center(
+                    Panel(
+                        "[bold yellow]Chưa có dữ liệu hóa đơn để thống kê!",
+                        border_style="yellow",
+                        title="[bold yellow]THÔNG BÁO",
+                        width=60
+                    )
+                ))
+            else:
+                print(self.center_text(f"{Fore.YELLOW if HAS_COLORAMA else ''}Chưa có dữ liệu hóa đơn để thống kê!{RESET}"))
+            
+            input(self.center_text("\nNhấn Enter để tiếp tục..."))
+            return
+        
+        # Tính tổng lượng tiêu thụ
+        tong_tieu_thu = sum(hd.chi_so_cuoi - hd.chi_so_dau for hd in hoa_don_list)
+        
+        # Thống kê theo năm
+        thong_ke_nam = {}
+        for hd in hoa_don_list:
+            nam = hd.nam
+            tieu_thu = hd.chi_so_cuoi - hd.chi_so_dau
+            
+            if nam not in thong_ke_nam:
+                thong_ke_nam[nam] = 0
+            thong_ke_nam[nam] += tieu_thu
+        
+        # Thống kê theo tháng trong năm hiện tại
+        nam_hien_tai = datetime.datetime.now().year
+        thong_ke_thang = {}
+        for hd in hoa_don_list:
+            if hd.nam == nam_hien_tai:
+                thang = hd.thang
+                tieu_thu = hd.chi_so_cuoi - hd.chi_so_dau
+                
+                if thang not in thong_ke_thang:
+                    thong_ke_thang[thang] = 0
+                thong_ke_thang[thang] += tieu_thu
+        
+        # Hiển thị thống kê
+        if HAS_RICH:
+            # Hiển thị thông tin tổng quan
+            console.print(Align.center(
+                Panel(
+                    f"[bold cyan]Tổng lượng điện tiêu thụ: [white]{tong_tieu_thu:,} kWh",
+                    border_style="cyan",
+                    width=60
+                )
+            ))
+            
+            # Hiển thị thống kê theo năm
+            year_table = Table(
+                title="THỐNG KÊ THEO NĂM",
+                show_header=True,
+                header_style="bold yellow",
+                border_style="yellow"
+            )
+            
+            year_table.add_column("Năm", style="cyan", justify="center")
+            year_table.add_column("Lượng tiêu thụ (kWh)", style="white", justify="right")
+            year_table.add_column("Tỷ lệ", style="green", justify="right")
+            
+            # Sắp xếp theo năm
+            for nam in sorted(thong_ke_nam.keys()):
+                tieu_thu = thong_ke_nam[nam]
+                ty_le = tieu_thu / tong_tieu_thu * 100 if tong_tieu_thu > 0 else 0
+                year_table.add_row(
+                    str(nam),
+                    f"{tieu_thu:,}",
+                    f"{ty_le:.2f}%"
+                )
+            
+            console.print(Align.center(year_table))
+            
+            # Hiển thị thống kê theo tháng trong năm hiện tại
+            if thong_ke_thang:
+                month_table = Table(
+                    title=f"THỐNG KÊ THEO THÁNG (NĂM {nam_hien_tai})",
+                    show_header=True,
+                    header_style="bold yellow",
+                    border_style="yellow"
+                )
+                
+                month_table.add_column("Tháng", style="cyan", justify="center")
+                month_table.add_column("Lượng tiêu thụ (kWh)", style="white", justify="right")
+                
+                for thang in range(1, 13):
+                    tieu_thu = thong_ke_thang.get(thang, 0)
+                    month_table.add_row(
+                        str(thang),
+                        f"{tieu_thu:,}"
+                    )
+                
+                console.print(Align.center(month_table))
+        else:
+            # Hiển thị thông kê với tabulate
+            print(self.center_text(f"Tổng lượng điện tiêu thụ: {tong_tieu_thu:,} kWh"))
+            print()
+            
+            # Thống kê theo năm
+            headers = ["Năm", "Lượng tiêu thụ (kWh)", "Tỷ lệ"]
+            if HAS_COLORAMA:
+                headers = [f"{MAIN_COLOR}{header}{RESET}" for header in headers]
+            
+            data = []
+            for nam in sorted(thong_ke_nam.keys()):
+                tieu_thu = thong_ke_nam[nam]
+                ty_le = tieu_thu / tong_tieu_thu * 100 if tong_tieu_thu > 0 else 0
+                data.append([nam, f"{tieu_thu:,}", f"{ty_le:.2f}%"])
+            
+            table = tabulate(data, headers=headers, tablefmt="grid", stralign="center", numalign="right")
+            print(self.center_text("THỐNG KÊ THEO NĂM"))
+            for line in table.split('\n'):
+                print(self.center_text(line))
+            
+            print()
+            
+            # Thống kê theo tháng
+            if thong_ke_thang:
+                headers = ["Tháng", "Lượng tiêu thụ (kWh)"]
+                if HAS_COLORAMA:
+                    headers = [f"{MAIN_COLOR}{header}{RESET}" for header in headers]
+                
+                data = []
+                for thang in range(1, 13):
+                    tieu_thu = thong_ke_thang.get(thang, 0)
+                    data.append([thang, f"{tieu_thu:,}"])
+                
+                table = tabulate(data, headers=headers, tablefmt="grid", stralign="center", numalign="right")
+                print(self.center_text(f"THỐNG KÊ THEO THÁNG (NĂM {nam_hien_tai})"))
+                for line in table.split('\n'):
+                    print(self.center_text(line))
+        
+        input(self.center_text("\nNhấn Enter để tiếp tục..."))
+    
+    def thong_ke_doanh_thu(self):
+        """Thống kê doanh thu theo thời gian"""
+        self.clear_screen()
+        
+        # Hiển thị tiêu đề
+        self.display_centered_title("THỐNG KÊ DOANH THU", 60)
+        
+        # Hiệu ứng loading
+        if HAS_RICH:
+            from rich.align import Align
+            from rich.panel import Panel
+            from rich.text import Text
+            from rich.table import Table
+            from rich.progress import Progress, SpinnerColumn, TextColumn
+            
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[bold yellow]Đang phân tích dữ liệu..."),
+                transient=True,
+            ) as progress:
+                task = progress.add_task("[yellow]Đang xử lý...", total=100)
+                for i in range(101):
+                    time.sleep(0.01)
+                    progress.update(task, completed=i)
+        else:
+            print(self.center_text("Đang thống kê doanh thu..."))
+            time.sleep(0.8)
+        
+        # Lấy danh sách tất cả hóa đơn
+        hoa_don_list = self.db.get_all_hoa_don()
+        
+        if not hoa_don_list:
+            if HAS_RICH:
+                console.print(Align.center(
+                    Panel(
+                        "[bold yellow]Chưa có dữ liệu hóa đơn để thống kê!",
+                        border_style="yellow",
+                        title="[bold yellow]THÔNG BÁO",
+                        width=60
+                    )
+                ))
+            else:
+                print(self.center_text(f"{Fore.YELLOW if HAS_COLORAMA else ''}Chưa có dữ liệu hóa đơn để thống kê!{RESET}"))
+            
+            input(self.center_text("\nNhấn Enter để tiếp tục..."))
+            return
+        
+        # Tính tổng doanh thu
+        tong_doanh_thu = sum(hd.so_tien for hd in hoa_don_list if hd.so_tien)
+        
+        # Thống kê theo năm
+        thong_ke_nam = {}
+        for hd in hoa_don_list:
+            if not hd.so_tien:  # Bỏ qua nếu chưa tính tiền
+                continue
+                
+            nam = hd.nam
+            
+            if nam not in thong_ke_nam:
+                thong_ke_nam[nam] = 0
+            thong_ke_nam[nam] += hd.so_tien
+        
+        # Thống kê theo tháng trong năm hiện tại
+        nam_hien_tai = datetime.datetime.now().year
+        thong_ke_thang = {}
+        for hd in hoa_don_list:
+            if not hd.so_tien:  # Bỏ qua nếu chưa tính tiền
+                continue
+                
+            if hd.nam == nam_hien_tai:
+                thang = hd.thang
+                
+                if thang not in thong_ke_thang:
+                    thong_ke_thang[thang] = 0
+                thong_ke_thang[thang] += hd.so_tien
+        
+        # Hiển thị thống kê
+        if HAS_RICH:
+            # Hiển thị thông tin tổng quan
+            console.print(Align.center(
+                Panel(
+                    f"[bold green]Tổng doanh thu: [white]{tong_doanh_thu:,}đ",
+                    border_style="green",
+                    width=60
+                )
+            ))
+            
+            # Hiển thị thống kê theo năm
+            year_table = Table(
+                title="THỐNG KÊ THEO NĂM",
+                show_header=True,
+                header_style="bold yellow",
+                border_style="yellow"
+            )
+            
+            year_table.add_column("Năm", style="cyan", justify="center")
+            year_table.add_column("Doanh thu", style="white", justify="right")
+            year_table.add_column("Tỷ lệ", style="green", justify="right")
+            
+            # Sắp xếp theo năm
+            for nam in sorted(thong_ke_nam.keys()):
+                doanh_thu = thong_ke_nam[nam]
+                ty_le = doanh_thu / tong_doanh_thu * 100 if tong_doanh_thu > 0 else 0
+                year_table.add_row(
+                    str(nam),
+                    f"{doanh_thu:,}đ",
+                    f"{ty_le:.2f}%"
+                )
+            
+            console.print(Align.center(year_table))
+            
+            # Hiển thị thống kê theo tháng trong năm hiện tại
+            if thong_ke_thang:
+                month_table = Table(
+                    title=f"THỐNG KÊ THEO THÁNG (NĂM {nam_hien_tai})",
+                    show_header=True,
+                    header_style="bold yellow",
+                    border_style="yellow"
+                )
+                
+                month_table.add_column("Tháng", style="cyan", justify="center")
+                month_table.add_column("Doanh thu", style="white", justify="right")
+                
+                for thang in range(1, 13):
+                    doanh_thu = thong_ke_thang.get(thang, 0)
+                    month_table.add_row(
+                        str(thang),
+                        f"{doanh_thu:,}đ"
+                    )
+                
+                console.print(Align.center(month_table))
+        else:
+            # Hiển thị thông kê với tabulate
+            print(self.center_text(f"Tổng doanh thu: {tong_doanh_thu:,}đ"))
+            print()
+            
+            # Thống kê theo năm
+            headers = ["Năm", "Doanh thu", "Tỷ lệ"]
+            if HAS_COLORAMA:
+                headers = [f"{MAIN_COLOR}{header}{RESET}" for header in headers]
+            
+            data = []
+            for nam in sorted(thong_ke_nam.keys()):
+                doanh_thu = thong_ke_nam[nam]
+                ty_le = doanh_thu / tong_doanh_thu * 100 if tong_doanh_thu > 0 else 0
+                data.append([nam, f"{doanh_thu:,}đ", f"{ty_le:.2f}%"])
+            
+            table = tabulate(data, headers=headers, tablefmt="grid", stralign="center", numalign="right")
+            print(self.center_text("THỐNG KÊ THEO NĂM"))
+            for line in table.split('\n'):
+                print(self.center_text(line))
+            
+            print()
+            
+            # Thống kê theo tháng
+            if thong_ke_thang:
+                headers = ["Tháng", "Doanh thu"]
+                if HAS_COLORAMA:
+                    headers = [f"{MAIN_COLOR}{header}{RESET}" for header in headers]
+                
+                data = []
+                for thang in range(1, 13):
+                    doanh_thu = thong_ke_thang.get(thang, 0)
+                    data.append([thang, f"{doanh_thu:,}đ"])
+                
+                table = tabulate(data, headers=headers, tablefmt="grid", stralign="center", numalign="right")
+                print(self.center_text(f"THỐNG KÊ THEO THÁNG (NĂM {nam_hien_tai})"))
+                for line in table.split('\n'):
+                    print(self.center_text(line))
+        
+        input(self.center_text("\nNhấn Enter để tiếp tục..."))
+    
+    def bao_cao_khach_hang_tieu_thu_nhieu(self):
+        """Báo cáo danh sách khách hàng tiêu thụ nhiều điện nhất"""
+        self.clear_screen()
+        
+        # Hiển thị tiêu đề
+        self.display_centered_title("BÁO CÁO KHÁCH HÀNG TIÊU THỤ NHIỀU NHẤT", 70)
+        
+        # Hiệu ứng loading
+        if HAS_RICH:
+            from rich.align import Align
+            from rich.panel import Panel
+            from rich.text import Text
+            from rich.table import Table
+            from rich.progress import Progress, SpinnerColumn, TextColumn
+            
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[bold yellow]Đang phân tích dữ liệu..."),
+                transient=True,
+            ) as progress:
+                task = progress.add_task("[yellow]Đang xử lý...", total=100)
+                for i in range(101):
+                    time.sleep(0.01)
+                    progress.update(task, completed=i)
+        else:
+            print(self.center_text("Đang tạo báo cáo khách hàng tiêu thụ nhiều nhất..."))
+            time.sleep(0.8)
+        
+        # Lấy danh sách tất cả hóa đơn
+        hoa_don_list = self.db.get_all_hoa_don()
+        
+        if not hoa_don_list:
+            if HAS_RICH:
+                console.print(Align.center(
+                    Panel(
+                        "[bold yellow]Chưa có dữ liệu hóa đơn để thống kê!",
+                        border_style="yellow",
+                        title="[bold yellow]THÔNG BÁO",
+                        width=60
+                    )
+                ))
+            else:
+                print(self.center_text(f"{Fore.YELLOW if HAS_COLORAMA else ''}Chưa có dữ liệu hóa đơn để thống kê!{RESET}"))
+            
+            input(self.center_text("\nNhấn Enter để tiếp tục..."))
+            return
+        
+        # Thống kê theo khách hàng
+        thong_ke_khach_hang = {}
+        for hd in hoa_don_list:
+            ma_khach_hang = hd.ma_khach_hang
+            tieu_thu = hd.chi_so_cuoi - hd.chi_so_dau
+            
+            if ma_khach_hang not in thong_ke_khach_hang:
+                thong_ke_khach_hang[ma_khach_hang] = {
+                    'tong_tieu_thu': 0,
+                    'so_hoa_don': 0,
+                    'tong_tien': 0
+                }
+            
+            thong_ke_khach_hang[ma_khach_hang]['tong_tieu_thu'] += tieu_thu
+            thong_ke_khach_hang[ma_khach_hang]['so_hoa_don'] += 1
+            if hd.so_tien:
+                thong_ke_khach_hang[ma_khach_hang]['tong_tien'] += hd.so_tien
+        
+        # Sắp xếp theo lượng tiêu thụ (giảm dần)
+        top_khach_hang = sorted(
+            thong_ke_khach_hang.items(),
+            key=lambda x: x[1]['tong_tieu_thu'],
+            reverse=True
+        )
+        
+        # Lấy top 10 khách hàng
+        top_10 = top_khach_hang[:10]
+        
+        # Hiển thị báo cáo
+        if HAS_RICH:
+            from rich.align import Align
+            from rich.table import Table
+            
+            # Tạo bảng báo cáo
+            table = Table(
+                title="TOP 10 KHÁCH HÀNG TIÊU THỤ NHIỀU ĐIỆN NHẤT",
+                show_header=True,
+                header_style="bold yellow",
+                border_style="yellow"
+            )
+            
+            table.add_column("STT", style="dim", width=5, justify="center")
+            table.add_column("Mã KH", style="cyan")
+            table.add_column("Tên khách hàng", style="white")
+            table.add_column("Tổng tiêu thụ (kWh)", justify="right", style="green")
+            table.add_column("Trung bình/tháng", justify="right")
+            table.add_column("Tổng thanh toán", justify="right", style="yellow")
+            
+            for i, (ma_kh, data) in enumerate(top_10, 1):
+                # Lấy thông tin khách hàng
+                khach_hang = self.db.get_khach_hang(ma_kh)
+                ten_kh = khach_hang.ho_ten if khach_hang else "Không xác định"
+                
+                # Tính trung bình tiêu thụ mỗi tháng
+                trung_binh = data['tong_tieu_thu'] / data['so_hoa_don'] if data['so_hoa_don'] > 0 else 0
+                
+                table.add_row(
+                    str(i),
+                    ma_kh,
+                    ten_kh,
+                    f"{data['tong_tieu_thu']:,}",
+                    f"{trung_binh:.2f}",
+                    f"{data['tong_tien']:,}đ"
+                )
+            
+            console.print(Align.center(table))
+            
+        else:
+            # Hiển thị với tabulate
+            headers = ["STT", "Mã KH", "Tên khách hàng", "Tổng tiêu thụ (kWh)", "Trung bình/tháng", "Tổng thanh toán"]
+            if HAS_COLORAMA:
+                headers = [f"{MAIN_COLOR}{header}{RESET}" for header in headers]
+            
+            data = []
+            for i, (ma_kh, thong_ke) in enumerate(top_10, 1):
+                # Lấy thông tin khách hàng
+                khach_hang = self.db.get_khach_hang(ma_kh)
+                ten_kh = khach_hang.ho_ten if khach_hang else "Không xác định"
+                
+                # Tính trung bình tiêu thụ mỗi tháng
+                trung_binh = thong_ke['tong_tieu_thu'] / thong_ke['so_hoa_don'] if thong_ke['so_hoa_don'] > 0 else 0
+                
+                data.append([
+                    i,
+                    ma_kh,
+                    ten_kh,
+                    f"{thong_ke['tong_tieu_thu']:,}",
+                    f"{trung_binh:.2f}",
+                    f"{thong_ke['tong_tien']:,}đ"
+                ])
+            
+            table = tabulate(data, headers=headers, tablefmt="grid", stralign="center", numalign="right")
+            print(self.center_text("TOP 10 KHÁCH HÀNG TIÊU THỤ NHIỀU ĐIỆN NHẤT"))
+            for line in table.split('\n'):
+                print(self.center_text(line))
+        
+        input(self.center_text("\nNhấn Enter để tiếp tục..."))
+    
     def startup_animation(self):
         """Hiển thị hiệu ứng khởi động đẹp mắt khi mở ứng dụng"""
         self.clear_screen()

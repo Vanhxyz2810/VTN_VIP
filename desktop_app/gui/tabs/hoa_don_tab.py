@@ -694,7 +694,15 @@ class HoaDonTab(QWidget):
         nam_text = self.nam_combo.currentText()
         
         thang = None if thang_index == 0 else thang_index
-        nam = None if nam_text == "Tất cả năm" else int(nam_text)
+        
+        # Xử lý chuỗi nam_text để trích xuất số năm
+        if nam_text == "Tất cả năm":
+            nam = None
+        else:
+            # Trích xuất số năm từ chuỗi (ví dụ: "Nam 2021" -> 2021)
+            import re
+            nam_match = re.search(r'\d{4}', nam_text)
+            nam = int(nam_match.group()) if nam_match else None
         
         # Tìm kiếm
         hoa_don_list = self.db.search_hoa_don(keyword, thang, nam)
@@ -736,7 +744,15 @@ class HoaDonTab(QWidget):
         nam_text = self.nam_combo.currentText()
         
         thang = None if thang_index == 0 else thang_index
-        nam = None if nam_text == "Tất cả năm" else int(nam_text)
+        
+        # Xử lý chuỗi nam_text để trích xuất số năm
+        if nam_text == "Tất cả năm":
+            nam = None
+        else:
+            # Trích xuất số năm từ chuỗi (ví dụ: "Nam 2021" -> 2021)
+            import re
+            nam_match = re.search(r'\d{4}', nam_text)
+            nam = int(nam_match.group()) if nam_match else None
         
         # Lọc hóa đơn theo tháng và năm
         hoa_don_list = []
