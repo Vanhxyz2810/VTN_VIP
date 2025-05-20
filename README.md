@@ -1,6 +1,6 @@
-# 🔌 Ứng Dụng Quản Lý Tiền Điện VTN
+# 🔌 Ứng Dụng Quản Lý Tiền Điện VTN - VIP
 
-![Banner](imgs/logo_vtn.png)
+![Banner](https://raw.githubusercontent.com/Vanhxyz2810/VTN_VIP/refs/heads/master/imgs/vtn_vip.png)
 
 Ứng dụng quản lý tiền điện toàn diện cho doanh nghiệp điện lực, hỗ trợ đầy đủ các tính năng từ quản lý khách hàng đến tính toán hóa đơn và xuất báo cáo.
 
