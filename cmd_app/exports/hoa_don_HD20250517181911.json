@@ -1,0 +1,18 @@
+{
+    "ma_hoa_don": "HD20250517181911",
+    "thang": 4,
+    "nam": 2025,
+    "khach_hang": {
+        "ma_khach_hang": "KH20250513163659",
+        "ho_ten": "thuan sap ra",
+        "dia_chi": "capuckia",
+        "so_dien_thoai": "09101010101",
+        "ma_cong_to": "012990222"
+    },
+    "chi_so_dau": 0,
+    "chi_so_cuoi": 3,
+    "so_dien": 3,
+    "so_tien": 5702.400000000001,
+    "da_thanh_toan": false,
+    "ngay_thanh_toan": null
+}
