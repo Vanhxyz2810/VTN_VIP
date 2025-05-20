@@ -99,6 +99,11 @@ class BangGia:
         kwh_bac_truoc = 0
         
         for kWh_max, don_gia in self.bac_thang:
+            # Kiểm tra giá trị kWh_max trước khi tính toán
+            if kWh_max is None:
+                # Xử lý khi giá trị bị None: giả sử là vô cùng
+                kWh_max = float('inf')
+                
             # Số kWh của bậc hiện tại
             kwh_bac_hien_tai = min(kWh_max - kwh_bac_truoc, kwh_con_lai)
             
