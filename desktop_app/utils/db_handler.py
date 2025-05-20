@@ -154,6 +154,18 @@ class DatabaseHandler:
             bool: True nếu thành công, False nếu thất bại
         """
         try:
+            # Trước tiên, tìm và xóa tất cả các hóa đơn liên quan đến khách hàng
+            hoa_don_list = self.get_all_hoa_don()
+            hoa_don_cua_khach_hang = [hd for hd in hoa_don_list if hd.ma_khach_hang == ma_khach_hang]
+            
+            # Lọc lại danh sách hóa đơn để loại bỏ các hóa đơn của khách hàng cần xóa
+            hoa_don_list = [hd for hd in hoa_don_list if hd.ma_khach_hang != ma_khach_hang]
+            
+            # Lưu lại danh sách hóa đơn đã loại bỏ
+            with open(self.hoa_don_file, 'w', encoding='utf-8') as f:
+                json.dump([hd.to_dict() for hd in hoa_don_list], f, ensure_ascii=False, indent=4)
+            
+            # Sau đó, xóa khách hàng
             khach_hang_list = self.get_all_khach_hang()
             
             for i, kh in enumerate(khach_hang_list):
@@ -165,6 +177,10 @@ class DatabaseHandler:
                     
                     return True
             
+            # Nếu không tìm thấy khách hàng nhưng đã xóa hóa đơn thì vẫn trả về True
+            if hoa_don_cua_khach_hang:
+                return True
+                
             return False
         except Exception as e:
             print(f"Lỗi khi xóa khách hàng: {e}")

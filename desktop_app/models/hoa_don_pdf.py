@@ -1,8 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Import tất cả các module cần thiết
+import os
+import datetime
+import locale
+from num2words import num2words
+import random
+import hashlib
+import urllib.parse
+import urllib.request
+from io import BytesIO
+
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, Flowable
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
@@ -10,11 +21,9 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.units import mm
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
 from reportlab.platypus.frames import Frame
-from reportlab.lib.enums import TA_CENTER, TA_RIGHT
-import os
-import datetime
-from num2words import num2words
-import locale
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.graphics.shapes import Drawing, Line, Rect, String
+from reportlab.graphics.barcode import qr
 
 # Đặt locale cho tiếng Việt
 try:
@@ -29,8 +38,39 @@ except:
 VTN_YELLOW = colors.Color(1, 0.7, 0, 1)         # Màu vàng #FFB300
 VTN_ORANGE = colors.Color(1, 0.6, 0, 1)         # Màu cam #FF9800
 VTN_LIGHT_YELLOW = colors.Color(1, 0.98, 0.9, 1) # Màu vàng nhạt #FFFDE7
-VTN_BACKGROUND = colors.Color(0.97, 0.97, 0.97, 1) # Màu nền xám nhạt
-VTN_TEXT = colors.Color(0.13, 0.13, 0.13, 1)     # Màu chữ #212121
+VTN_DARK_BG = colors.Color(0.12, 0.12, 0.12, 1) # Màu nền tối #1E1E1E
+VTN_TEXT = colors.Color(0.93, 0.93, 0.93, 1)    # Màu chữ sáng #EEEEEE
+
+# Flowable tùy chỉnh cho badge đã thanh toán
+class PaidStamp(Flowable):
+    """Tạo hình đóng dấu THANH TOÁN"""
+    def __init__(self, width=60, height=60):
+        Flowable.__init__(self)
+        self.width = width
+        self.height = height
+        
+    def draw(self):
+        # Lưu trạng thái
+        self.canv.saveState()
+        
+        # Tạo biểu tượng dấu thanh toán
+        self.canv.setStrokeColor(colors.green)
+        self.canv.setFillColor(colors.Color(0, 0.6, 0, 0.3))  # Màu xanh lá nhạt
+        self.canv.setLineWidth(2)
+        
+        # Vẽ hình tròn
+        self.canv.circle(self.width/2, self.height/2, min(self.width, self.height)/2 - 5, stroke=1, fill=1)
+        
+        # Vẽ dấu tích bên trong
+        self.canv.setStrokeColor(colors.white)
+        self.canv.setLineWidth(3)
+        
+        # Tạo dấu tích
+        self.canv.line(self.width/2 - 15, self.height/2, self.width/2 - 5, self.height/2 - 10)
+        self.canv.line(self.width/2 - 5, self.height/2 - 10, self.width/2 + 15, self.height/2 + 10)
+        
+        # Phục hồi trạng thái
+        self.canv.restoreState()
 
 # Tạo class DocTemplate tùy chỉnh để thêm màu nền và trang trí
 class HoaDonPDFTemplate(BaseDocTemplate):
@@ -45,95 +85,140 @@ class HoaDonPDFTemplate(BaseDocTemplate):
     def add_page_design(self, canvas, doc):
         width, height = doc.pagesize
         
-        # Đặt màu nền trắng cho toàn bộ trang
+        # Đặt màu nền tối cho toàn bộ trang
         canvas.saveState()
-        canvas.setFillColor(colors.white)
+        canvas.setFillColor(VTN_DARK_BG)
         canvas.rect(0, 0, width, height, fill=1, stroke=0)
         
-        # Tạo viền màu vàng cam ở trên
+        # Tạo viền màu vàng cam ở trên với bo góc
         canvas.setFillColor(VTN_ORANGE)
-        canvas.rect(0, height-40, width, 40, fill=1, stroke=0)
+        # Vẽ hình chữ nhật bo góc bên phải
+        radius = 15
+        canvas.roundRect(0, height-35, width, 35, radius, fill=1, stroke=0)
         
-        # Tạo viền màu vàng ở dưới
+        # Tạo viền màu vàng ở dưới với bo góc
         canvas.setFillColor(VTN_YELLOW)
-        canvas.rect(0, 0, width, 15, fill=1, stroke=0)
-        
-        # Thêm viền mờ ở góc
-        canvas.setFillColor(VTN_LIGHT_YELLOW)
-        canvas.setFillAlpha(0.5)
-        
-        # Viền trang trí góc trên phải
-        path = canvas.beginPath()
-        path.moveTo(width-100, height)
-        path.lineTo(width, height)
-        path.lineTo(width, height-100)
-        path.lineTo(width-100, height)
-        canvas.drawPath(path, fill=1, stroke=0)
-        
-        # Viền trang trí góc dưới trái
-        path = canvas.beginPath()
-        path.moveTo(0, 100)
-        path.lineTo(0, 0)
-        path.lineTo(100, 0)
-        path.lineTo(0, 100)
-        canvas.drawPath(path, fill=1, stroke=0)
+        canvas.roundRect(0, 0, width, 12, radius, fill=1, stroke=0)
         
         # Thêm ngày tháng ở góc trên phải
-        canvas.setFillAlpha(1)
         canvas.setFillColor(colors.white)
         canvas.setFont("Roboto", 9)
         
         # Format ngày tháng
         today = datetime.datetime.now().strftime("%d/%m/%Y")
-        canvas.drawRightString(width-25, height-25, f"Ngày: {today}")
+        canvas.drawRightString(width-25, height-22, f"Ngày: {today}")
         
         # Thêm watermark mờ
         canvas.saveState()
         canvas.setFont("Roboto-Bold", 50)
         canvas.setFillColor(VTN_LIGHT_YELLOW)
-        canvas.setFillAlpha(0.1)
-        canvas.translate(width/2, height/2)
-        canvas.rotate(45)
-        canvas.drawCentredString(0, 0, "VTN VIP")
+        canvas.setFillAlpha(0.03)  # Làm mờ hơn
+        
+        # Tạo watermark hình thức phức tạp hơn
+        for i in range(5):
+            x_pos = random.randint(50, int(width)-50)
+            y_pos = random.randint(50, int(height)-50)
+            rotation = random.randint(0, 359)
+            
+            canvas.saveState()
+            canvas.translate(x_pos, y_pos)
+            canvas.rotate(rotation)
+            canvas.drawCentredString(0, 0, "VTN VIP")
+            canvas.restoreState()
+        
         canvas.restoreState()
         
-        # Thêm footer
-        canvas.setFont("Roboto", 9)
-        canvas.setFillColor(VTN_TEXT)
-        canvas.drawCentredString(width/2, 30, "Cảm ơn quý khách đã sử dụng dịch vụ")
-        canvas.drawCentredString(width/2, 20, "Hotline hỗ trợ khách hàng: 19009000")
+        # Thêm footer hiện đại
+        canvas.saveState()
+        canvas.setFillColor(colors.Color(0.15, 0.15, 0.15, 1))
+        canvas.roundRect(width/2 - 220, 15, 440, 25, 10, fill=1, stroke=0)
+        
+        canvas.setFont("Roboto", 8)
+        canvas.setFillColor(colors.white)
+        canvas.drawCentredString(width/2, 27, "Cảm ơn quý khách đã sử dụng dịch vụ | Hotline: 19009000")
         
         canvas.restoreState()
+
+
+
+# Thay đổi hàm tạo QR để sử dụng VietQR
+def create_viet_qr(ma_hoa_don, amount):
+    """Tạo mã QR sử dụng VietQR API"""
+    try:
+        # Định dạng thông tin thanh toán
+        addInfo = f"Thanh toan hoa don {ma_hoa_don}"
+        accountName = "Cong Ty Dien Luc VTN VIP"
+        
+        # URL encode các tham số
+        encoded_info = urllib.parse.quote(addInfo)
+        encoded_name = urllib.parse.quote(accountName)
+        
+        # Tạo URL đến VietQR API
+        url = f"https://img.vietqr.io/image/mbbank-9728102006-compact2.jpg?amount={int(amount)}&addInfo={encoded_info}&accountName={encoded_name}"
+        
+        # Tải hình ảnh từ URL
+        img_data = urllib.request.urlopen(url).read()
+        img_file = BytesIO(img_data)
+        
+        # Trả về đối tượng Image của ReportLab
+        return Image(img_file, width=150, height=150)
+    except Exception as e:
+        print(f"Lỗi khi tạo mã QR VietQR: {e}")
+        # Sử dụng QR thông thường nếu có lỗi xảy ra
+
 
 class HoaDonPDF:
     def __init__(self):
         # Đăng ký font Roboto hỗ trợ tiếng Việt
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
-        # Đăng ký font Regular
-        font_regular_path = os.path.join(base_dir, 'font', 'Roboto-Regular.ttf')
-        if not os.path.exists(font_regular_path):
-            font_regular_path = os.path.join(base_dir, 'font', 'static', 'Roboto-Regular.ttf')
-            if not os.path.exists(font_regular_path):
-                print(f"Không tìm thấy font Roboto-Regular.ttf")
-                return
+        # Tìm font Roboto trong các vị trí có thể
+        font_paths = [
+            # Tìm trong thư mục font
+            os.path.join(base_dir, 'font', 'Roboto-Regular.ttf'),
+            os.path.join(base_dir, 'font', 'static', 'Roboto-Regular.ttf'),
+            os.path.join(base_dir, 'desktop_app', 'font', 'Roboto-Regular.ttf'),
+            os.path.join(base_dir, 'desktop_app', 'font', 'static', 'Roboto-Regular.ttf'),
+            # Tìm trong thư mục assets
+            os.path.join(base_dir, 'assets', 'fonts', 'Roboto-Regular.ttf'),
+            os.path.join(base_dir, 'desktop_app', 'assets', 'fonts', 'Roboto-Regular.ttf'),
+        ]
         
-        # Đăng ký font Bold
-        font_bold_path = os.path.join(base_dir, 'font', 'static', 'Roboto-Bold.ttf')
-        if not os.path.exists(font_bold_path):
-            print(f"Không tìm thấy font Roboto-Bold.ttf")
+        font_regular_path = None
+        for path in font_paths:
+            if os.path.exists(path):
+                font_regular_path = path
+                break
+                
+        if not font_regular_path:
+            print("Không tìm thấy font Roboto Regular")
+            return
+            
+        # Tìm font Roboto Bold
+        bold_font_paths = [
+            # Thay Regular bằng Bold trong đường dẫn đã tìm được
+            path.replace('Regular', 'Bold') for path in font_paths
+        ]
+        
+        font_bold_path = None
+        for path in bold_font_paths:
+            if os.path.exists(path):
+                font_bold_path = path
+                break
+                
+        if not font_bold_path:
+            print("Không tìm thấy font Roboto Bold, sử dụng Regular")
             font_bold_path = font_regular_path
         
         # Đăng ký các font
-        pdfmetrics.registerFont(TTFont('Roboto', font_regular_path))
-        pdfmetrics.registerFont(TTFont('Roboto-Bold', font_bold_path))
+        try:
+            pdfmetrics.registerFont(TTFont('Roboto', font_regular_path))
+            pdfmetrics.registerFont(TTFont('Roboto-Bold', font_bold_path))
+        except Exception as e:
+            print(f"Lỗi khi đăng ký font: {e}")
         
-        # Tạo style cho các phần văn bản
+        # Tạo style cho các phần văn bản - màu sáng trên nền tối
         self.styles = getSampleStyleSheet()
-        self.styles.add(ParagraphStyle(name='Normal_VN', fontName='Roboto', fontSize=10, leading=14))
-        self.styles.add(ParagraphStyle(name='Title_VN', fontName='Roboto-Bold', fontSize=14, alignment=1, spaceAfter=10))
-        self.styles.add(ParagraphStyle(name='Bold_VN', fontName='Roboto-Bold', fontSize=10, leading=14, spaceAfter=6))
-        self.styles.add(ParagraphStyle(name='Footer_VN', fontName='Roboto', fontSize=8, leading=10, alignment=1))
         
         # Style cho tiêu đề chính - màu trắng
         self.title_style = ParagraphStyle(
@@ -142,10 +227,10 @@ class HoaDonPDF:
             fontSize=16,
             alignment=TA_CENTER,
             spaceAfter=10,
-            textColor=colors.white
+            textColor=VTN_ORANGE
         )
         
-        # Style cho subtitle - màu trắng và căn giữa
+        # Style cho subtitle
         self.subtitle_style = ParagraphStyle(
             name='Subtitle_Style',
             fontName='Roboto',
@@ -161,23 +246,12 @@ class HoaDonPDF:
             fontName='Roboto-Bold',
             fontSize=12,
             leading=16,
-            textColor=VTN_ORANGE,
+            textColor=VTN_YELLOW,
             spaceBefore=15,
             spaceAfter=10
         )
         
-        # Style cho heading phụ
-        self.subheading_style = ParagraphStyle(
-            name='Subheading_Style',
-            fontName='Roboto-Bold',
-            fontSize=11,
-            leading=14,
-            textColor=VTN_YELLOW,
-            spaceBefore=10,
-            spaceAfter=8
-        )
-        
-        # Style cho company text đậm - màu cam
+        # Style cho company text
         self.company_style = ParagraphStyle(
             name='Company_Style',
             fontName='Roboto-Bold',
@@ -192,350 +266,374 @@ class HoaDonPDF:
             fontName='Roboto-Bold',
             fontSize=10,
             leading=14,
-            textColor=VTN_YELLOW
+            textColor=colors.white
         )
         
-        # Style cho giá trị thông tin - màu đen đậm
+        # Style cho giá trị thông tin
         self.value_style = ParagraphStyle(
             name='Value_Style',
-            fontName='Roboto-Bold',
+            fontName='Roboto',
             fontSize=10,
             leading=14,
-            textColor=VTN_TEXT
+            textColor=colors.white
         )
         
-        # Style cho summary - màu cam, đậm, cỡ lớn
+        # Style cho tổng tiền
         self.summary_style = ParagraphStyle(
             name='Summary_Style',
             fontName='Roboto-Bold',
-            fontSize=13,
+            fontSize=14,
             leading=16,
             alignment=TA_RIGHT,
             textColor=VTN_ORANGE
         )
+        
+        # Style cho thông tin hóa đơn
+        self.invoice_info_style = ParagraphStyle(
+            name='Invoice_Info',
+            fontName='Roboto',
+            fontSize=9,
+            leading=12,
+            textColor=colors.white
+        )
+        
+        # Style cho mã hóa đơn
+        self.invoice_code_style = ParagraphStyle(
+            name='Invoice_Code',
+            fontName='Roboto-Bold',
+            fontSize=12,
+            leading=14,
+            textColor=VTN_YELLOW
+        )
     
     def doc_so_thanh_chu(self, number):
         """Chuyển đổi số thành chữ tiếng Việt"""
+        if number is None:
+            return "Không đồng"
+            
         try:
-            text = num2words(number, lang='vi')
+            # Phương pháp 1: Sử dụng num2words
+            text = num2words(int(number), lang='vi')
             text = text.replace(',', '').replace('-', ' ').title()
             return f"{text} Đồng"
-        except:
-            thousands = number // 1000
-            remainder = number % 1000
-            if remainder == 0:
-                return f"{thousands} Nghìn Đồng"
-            else:
-                return f"{thousands} Nghìn {remainder} Đồng"
-
+        except Exception as e:
+            print(f"Lỗi khi chuyển đổi số thành chữ: {e}")
+            # Phương pháp 2: Đơn giản hóa
+            try:
+                number = int(number)
+                thousands = number // 1000
+                remainder = number % 1000
+                
+                if remainder == 0:
+                    return f"{thousands} Nghìn Đồng"
+                else:
+                    return f"{thousands} Nghìn {remainder} Đồng"
+            except:
+                return "Không đồng"
+                
     def tao_hoa_don(self, hoa_don, khach_hang, bang_gia, output_dir="exports"):
-        """Tạo file PDF hóa đơn điện"""
+        """Tạo file PDF hóa đơn điện - phiên bản chuyên nghiệp"""
+        # Kiểm tra dữ liệu đầu vào
+        if hoa_don is None or khach_hang is None or bang_gia is None:
+            print("Dữ liệu đầu vào không hợp lệ")
+            return None
+            
+        # Đảm bảo các thuộc tính của hóa đơn không bị None
+        ma_hoa_don = getattr(hoa_don, 'ma_hoa_don', 'N/A')
+        thang = getattr(hoa_don, 'thang', 'N/A')
+        nam = getattr(hoa_don, 'nam', 'N/A')
+        da_thanh_toan = getattr(hoa_don, 'da_thanh_toan', False)
+        chi_so_dau = getattr(hoa_don, 'chi_so_dau', 0)
+        chi_so_cuoi = getattr(hoa_don, 'chi_so_cuoi', 0)
+        
+        # Tính lượng tiêu thụ
+        tieu_thu = getattr(hoa_don, 'tieu_thu', None)
+        if tieu_thu is None:
+            tieu_thu = chi_so_cuoi - chi_so_dau
+        
         # Đảm bảo thư mục lưu tồn tại
-        os.makedirs(output_dir, exist_ok=True)
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        output_dir_full = os.path.join(base_dir, output_dir)
         
-        # Tạo tên file
-        file_name = f"{output_dir}/hoa_don_{hoa_don.ma_hoa_don}.pdf"
+        try:
+            os.makedirs(output_dir_full, exist_ok=True)
+        except Exception as e:
+            print(f"Lỗi khi tạo thư mục xuất PDF: {e}")
+            # Fallback: sử dụng thư mục hiện tại
+            output_dir_full = os.path.dirname(os.path.abspath(__file__))
         
-        # Tạo tài liệu PDF với nền màu trắng và trang trí
-        doc = HoaDonPDFTemplate(file_name, pagesize=A4, rightMargin=25, leftMargin=25, topMargin=70, bottomMargin=45)
+        # Tạo tên file với đường dẫn đầy đủ
+        file_name = os.path.join(output_dir_full, f"hoa_don_{ma_hoa_don}.pdf")
+        
+        print(f"Đang tạo file PDF tại: {file_name}")
+        
+        # Khởi tạo các biến và tài liệu PDF
         elements = []
+        doc = HoaDonPDFTemplate(file_name, pagesize=A4, rightMargin=25, leftMargin=25, topMargin=45, bottomMargin=40)
         
         # Tìm đường dẫn logo
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        logo_path = os.path.join(base_dir, 'imgs', '@vtn_vip.png')
+        logo_path = None
+        logo_paths = [
+            os.path.join(base_dir, 'imgs', 'vtn_vip.png'),
+            os.path.join(base_dir, 'imgs', '@vtn_vip.png'),
+            os.path.join(base_dir, 'desktop_app', 'imgs', 'vtn_vip.png'),
+            os.path.join(base_dir, 'desktop_app', 'assets', 'images', 'vtn_vip.png'),
+            os.path.join(base_dir, 'desktop_app', 'assets', 'vtn_vip.png'),
+            os.path.join(base_dir, 'assets', 'imgs', 'vtn_vip.png'),
+            os.path.join(base_dir, 'assets', 'images', 'vtn_vip.png')
+        ]
         
-        # Khoảng cách
-        elements.append(Spacer(1, 10))
+        for path in logo_paths:
+            if os.path.exists(path):
+                logo_path = path
+                break
         
-        # ===== HEADER: LOGO VÀ TIÊU ĐỀ =====
-        if os.path.exists(logo_path):
-            # Chuẩn bị logo
-            logo = Image(logo_path, width=90, height=45, hAlign='LEFT')
+        # Khởi tạo thông tin cho mã QR
+        qr_data = (f"HD:{ma_hoa_don}|KH:{khach_hang.ma_khach_hang}|"
+                  f"Tháng:{thang}/{nam}|"
+                  f"Tiêu thụ:{tieu_thu}kWh|"
+                  f"Thanh toán:{da_thanh_toan}")
+        
+        # ===== HEADER & LOGO =====
+        # Tạo bảng header với logo và thông tin công ty
+        if logo_path and os.path.exists(logo_path):
+            logo = Image(logo_path, width=100, height=35)
             
-            # Chuẩn bị tiêu đề
-            title = Paragraph("HÓA ĐƠN TIỀN ĐIỆN", self.title_style)
-            subtitle = Paragraph("(Bản thể hiện hóa đơn điện tử)", self.subtitle_style)
-            
-            # Tạo bảng header với logo bên trái, tiêu đề bên phải
-            header_data = [
-                [logo, title],
-                ['', subtitle]
+            company_info = [
+                Paragraph("CÔNG TY ĐIỆN LỰC VTN VIP", self.company_style),
+                Paragraph("MST: 0100100079", self.invoice_info_style),
+                Paragraph("Hotline: 19009000", self.invoice_info_style)
             ]
-            header_table = Table(header_data, colWidths=[100, 380])
-            header_table.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (0, -1), 'LEFT'),   # Logo căn trái
-                ('ALIGN', (1, 0), (1, -1), 'CENTER'), # Tiêu đề căn giữa
-                ('VALIGN', (0, 0), (1, -1), 'MIDDLE'),# Căn giữa theo chiều dọc
-                ('SPAN', (0, 0), (0, 1)),             # Gộp hai dòng cho logo
-                ('BACKGROUND', (1, 0), (1, 1), VTN_ORANGE),  # Nền màu cho tiêu đề
-                ('LEFTPADDING', (0, 0), (0, 0), 2),   # Padding bên trái cho logo
-                ('RIGHTPADDING', (0, 0), (0, 0), 5),  # Padding bên phải cho logo
-                ('BOTTOMPADDING', (0, 0), (1, 1), 10),# Padding dưới cho tất cả
-                ('TOPPADDING', (0, 0), (1, 1), 10),   # Padding trên cho tất cả
-                ('ROUNDEDCORNERS', [5, 5, 5, 5]),     # Bo góc cho bảng
-            ]))
-            elements.append(header_table)
-        else:
-            # Nếu không có logo, chỉ thêm tiêu đề
-            title_table = Table([[Paragraph("HÓA ĐƠN TIỀN ĐIỆN", self.title_style)], 
-                               [Paragraph("(Bản thể hiện hóa đơn điện tử)", self.subtitle_style)]], 
-                              colWidths=[480])
             
-            title_table.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            # Thay đổi cách hiển thị header không có thanh ngang
+            company_table = Table([
+                [logo, 
+                 Table([
+                     [Paragraph("HÓA ĐƠN TIỀN ĐIỆN", self.title_style)],
+                     [Paragraph(f"Kỳ thanh toán: Tháng {thang}/{nam}", self.subtitle_style)]
+                 ], colWidths=[380])
+                ],
+                [Paragraph(f"Mã hóa đơn: {ma_hoa_don}", self.invoice_code_style),
+                 Table([company_info], colWidths=[380])
+                ]
+            ], colWidths=[120, 380])
+            
+            company_table.setStyle(TableStyle([
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('BACKGROUND', (0, 0), (-1, -1), VTN_ORANGE),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-                ('TOPPADDING', (0, 0), (-1, -1), 10),
-                ('ROUNDEDCORNERS', [5, 5, 5, 5]),
+                ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+                ('LEFTPADDING', (0, 0), (0, -1), 0),
+                ('RIGHTPADDING', (0, 0), (0, -1), 10),
             ]))
-            elements.append(title_table)
-        
-        elements.append(Spacer(1, 15))
-        
-        # ===== THÔNG TIN CÔNG TY VÀ HÓA ĐƠN =====
-        # Tạo bảng thông tin công ty ở bên trái và thông tin hóa đơn ở bên phải
-        company_info = [
-            [Paragraph("CÔNG TY ĐIỆN LỰC VTN VIP", self.company_style)],
-            [Paragraph("Địa chỉ: <font color='#212121'>Số 11 Cửa Bắc, Trúc Bạch, Ba Đình, Hà Nội</font>", self.customer_label_style)],
-            [Paragraph("Điện thoại: <font color='#212121'>19009000</font>", self.customer_label_style)],
-            [Paragraph("MST: <font color='#212121'>0100100079</font>", self.customer_label_style)]
-        ]
-        
-        bill_info = [
-            [Paragraph(f"MÃ HÓA ĐƠN: <font color='#FF9800'>{hoa_don.ma_hoa_don}</font>", self.value_style)],
-            [Paragraph(f"Ngày lập: <font color='#212121'>{datetime.datetime.now().strftime('%d/%m/%Y')}</font>", self.customer_label_style)],
-            [Paragraph(f"Kỳ thanh toán: <font color='#212121'>Tháng {hoa_don.thang}/{hoa_don.nam}</font>", self.customer_label_style)],
-            [Paragraph(f"Trạng thái: <font color='{'green' if hoa_don.da_thanh_toan else 'red'}'>{('Đã thanh toán') if hoa_don.da_thanh_toan else ('Chưa thanh toán')}</font>", self.customer_label_style)]
-        ]
-        
-        header_table = Table(
-            [[
-                Table(company_info, colWidths=[240]),
-                Table(bill_info, colWidths=[240])
-            ]],
-            colWidths=[240, 240]
-        )
-        
-        header_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-            ('VALIGN', (0, 0), (1, 0), 'TOP'),
-            ('LEFTPADDING', (0, 0), (1, 0), 0),
-            ('RIGHTPADDING', (0, 0), (1, 0), 0),
-            ('TOPPADDING', (0, 0), (1, 0), 0),
-            ('BOTTOMPADDING', (0, 0), (1, 0), 0),
-        ]))
-        
-        elements.append(header_table)
+            
+            elements.append(company_table)
+        else:
+            # Nếu không có logo, hiển thị tiêu đề đơn giản
+            elements.append(Paragraph("HÓA ĐƠN TIỀN ĐIỆN", self.title_style))
+            elements.append(Paragraph(f"Mã hóa đơn: {ma_hoa_don} | Tháng {thang}/{nam}", self.subtitle_style))
+            
         elements.append(Spacer(1, 20))
         
-        # ===== VIỀN NGĂN CÁCH =====
-        separator = Table([['']], colWidths=[480], rowHeights=[2])
-        separator.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), VTN_YELLOW),
+        # ===== THÔNG TIN KHÁCH HÀNG VÀ MÃ QR =====
+        # Lấy thông tin khách hàng
+        ho_ten = getattr(khach_hang, 'ho_ten', 'N/A')
+        dia_chi = getattr(khach_hang, 'dia_chi', 'N/A')
+        ma_khach_hang = getattr(khach_hang, 'ma_khach_hang', 'N/A')
+        so_dien_thoai = getattr(khach_hang, 'so_dien_thoai', 'N/A')
+        ma_cong_to = getattr(khach_hang, 'ma_cong_to', 'N/A')
+        
+        # === Thiết kế riêng phần khách hàng và QR code ===
+        # Thông tin khách hàng - thiết kế đẹp mắt hơn
+        # Tạo style riêng cho nhãn và giá trị
+        label_style = ParagraphStyle(
+            name='Label_Style',
+            fontName='Roboto-Bold',
+            fontSize=9,
+            leading=12,
+            textColor=VTN_YELLOW
+        )
+
+        value_style = ParagraphStyle(
+            name='Value_Style',
+            fontName='Roboto',
+            fontSize=10,
+            leading=12,
+            textColor=colors.white
+        )
+
+        # Tạo bảng thông tin khách hàng với thiết kế mới đẹp mắt hơn
+        customer_header = Table([[Paragraph("THÔNG TIN KHÁCH HÀNG", self.heading_style)]], 
+                              colWidths=[480])
+        customer_header.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.15, 0.15, 0.15, 1)),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ]))
-        elements.append(separator)
-        elements.append(Spacer(1, 10))
-        
-        # ===== THÔNG TIN KHÁCH HÀNG =====
-        elements.append(Paragraph("THÔNG TIN KHÁCH HÀNG", self.heading_style))
-        
-        # Tạo bảng thông tin khách hàng đẹp với nền màu nhẹ
-        customer_data = [
-            [Paragraph("Tên khách hàng:", self.customer_label_style), 
-             Paragraph(f"<b>{khach_hang.ho_ten}</b>", self.value_style)],
-            [Paragraph("Địa chỉ:", self.customer_label_style), 
-             Paragraph(f"{khach_hang.dia_chi}", self.value_style)],
-            [Paragraph("Mã khách hàng:", self.customer_label_style), 
-             Paragraph(f"{khach_hang.ma_khach_hang}", self.value_style)],
-            [Paragraph("Số điện thoại:", self.customer_label_style), 
-             Paragraph(f"{khach_hang.so_dien_thoai}", self.value_style)],
-            [Paragraph("Mã công tơ:", self.customer_label_style), 
-             Paragraph(f"{khach_hang.ma_cong_to}", self.value_style)]
-        ]
-        
-        customer_table = Table(customer_data, colWidths=[120, 360])
-        customer_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), VTN_LIGHT_YELLOW),
-            ('BACKGROUND', (0, 0), (0, -1), VTN_YELLOW),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (0, -1), 'Roboto-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.white),
-            ('BOX', (0, 0), (-1, -1), 1, VTN_YELLOW),
-            ('ROUNDEDCORNERS', [5, 5, 5, 5]),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
         ]))
-        
+
+        # Tạo bảng chứa nội dung thông tin khách hàng
+        customer_content = [
+            # Dòng 1: Tên khách hàng (trên toàn bộ chiều rộng)
+            [Paragraph("<b>Tên khách hàng:</b>", label_style), 
+             Paragraph(ho_ten, value_style), '', ''],
+            
+            # Dòng 2: Mã khách hàng | Số điện thoại
+            [Paragraph("<b>Mã khách hàng:</b>", label_style), 
+             Paragraph(ma_khach_hang, value_style),
+             Paragraph("<b>Số điện thoại:</b>", label_style), 
+             Paragraph(so_dien_thoai, value_style)],
+             
+            # Dòng 3: Địa chỉ (trên toàn bộ chiều rộng)
+            [Paragraph("<b>Địa chỉ:</b>", label_style), 
+             Paragraph(dia_chi, value_style), '', ''],
+             
+            # Dòng 4: Mã công tơ | Ngày xuất
+            [Paragraph("<b>Mã công tơ:</b>", label_style), 
+             Paragraph(ma_cong_to, value_style),
+             Paragraph("<b>Ngày xuất:</b>", label_style), 
+             Paragraph(datetime.datetime.now().strftime('%d/%m/%Y'), value_style)]
+        ]
+
+        customer_info = Table(customer_content, colWidths=[100, 140, 100, 140])
+        customer_info.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.Color(0.18, 0.18, 0.18, 1)),
+            ('SPAN', (1, 0), (3, 0)),  # Gộp 3 ô cho tên khách hàng
+            ('SPAN', (1, 2), (3, 2)),  # Gộp 3 ô cho địa chỉ
+            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),  # Căn phải tất cả các nhãn
+            ('ALIGN', (2, 0), (2, -1), 'RIGHT'),  # Căn phải tất cả các nhãn ở cột 3
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.Color(0.22, 0.22, 0.22, 1)),  # Thêm đường kẻ mờ giữa các ô
+        ]))
+
+        # Kết hợp header và nội dung vào một bảng chính
+        customer_table = Table([
+            [customer_header],
+            [customer_info]
+        ], colWidths=[480])
+        customer_table.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 1, VTN_YELLOW),
+            ('LINEBELOW', (0, 0), (0, 0), 1, VTN_YELLOW),  # Đường kẻ dưới header
+            ('TOPPADDING', (0, 0), (-1, -1), 0),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('ROUNDEDCORNERS', [8, 8, 8, 8]),
+        ]))
+
         elements.append(customer_table)
         elements.append(Spacer(1, 15))
         
-        # ===== THÔNG TIN CHỈ SỐ =====
-        elements.append(Paragraph("CHỈ SỐ CÔNG TƠ VÀ SẢN LƯỢNG ĐIỆN TIÊU THỤ", self.heading_style))
+        # Tạo QR code riêng với nền trắng sử dụng VietQR
+        # Tạo QR code từ VietQR
+        tong_tien = getattr(hoa_don, 'so_tien', 0)
+        if tong_tien is None:
+            tong_tien = 0
+        viet_qr = create_viet_qr(ma_hoa_don, tong_tien)
+        qr_table = Table([
+            [Paragraph("QUÉT MÃ THANH TOÁN", self.heading_style)],
+            [viet_qr]
+        ], colWidths=[160])
+
+        qr_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, 0), colors.Color(0.15, 0.15, 0.15, 1)),
+            ('BACKGROUND', (0, 1), (0, 1), colors.white),  # Nền trắng cho QR
+            ('TEXTCOLOR', (0, 0), (0, 0), colors.white),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (0, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (0, -1), 10),
+            ('RIGHTPADDING', (0, 0), (0, -1), 10),
+            ('TOPPADDING', (0, 0), (0, 0), 8),
+            ('BOTTOMPADDING', (0, 0), (0, 0), 8),
+            ('TOPPADDING', (0, 1), (0, 1), 10),
+            ('BOTTOMPADDING', (0, 1), (0, 1), 10),
+            ('BOX', (0, 0), (0, -1), 1, VTN_YELLOW),
+            ('ROUNDEDCORNERS', [8, 8, 8, 8]),
+        ]))
+
+        # Thêm QR code riêng biệt sau phần thông tin chi tiết
+        elements.append(Spacer(1, 5))
+        elements.append(qr_table)
         
+        # ===== THÔNG TIN CHỈ SỐ =====
+        elements.append(Paragraph("CHỈ SỐ CÔNG TƠ VÀ TIÊU THỤ", self.heading_style))
+        
+        # Bảng chỉ số
         chi_so_data = [
             ['CHỈ SỐ ĐẦU KỲ', 'CHỈ SỐ CUỐI KỲ', 'SẢN LƯỢNG (kWh)'],
-            [str(hoa_don.chi_so_dau), str(hoa_don.chi_so_cuoi), str(hoa_don.tieu_thu)]
+            [str(chi_so_dau), str(chi_so_cuoi), str(tieu_thu)]
         ]
         
         chi_so_table = Table(chi_so_data, colWidths=[160, 160, 160])
         chi_so_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (-1, 0), VTN_ORANGE),
+            ('BACKGROUND', (0, 1), (-1, 1), colors.Color(0.18, 0.18, 0.18, 1)),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, 1), colors.white),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), 'Roboto-Bold'),
-            ('FONTNAME', (0, 1), (-1, 1), 'Roboto-Bold'),
+            ('FONTNAME', (0, 1), (-1, 1), 'Roboto'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('LEFTPADDING', (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('BOX', (0, 0), (-1, -1), 1, VTN_YELLOW),
+            ('ROUNDEDCORNERS', [5, 5, 5, 5]),
         ]))
         
         elements.append(chi_so_table)
         elements.append(Spacer(1, 15))
         
-        # ===== BẢNG TÍNH TIỀN ĐIỆN =====
-        elements.append(Paragraph("CHI TIẾT TIỀN ĐIỆN THEO BẬC THANG", self.heading_style))
-        
-        # Tính số điện tiêu thụ theo từng bậc thang
-        tieu_thu_theo_bac = []
-        so_dien_con_lai = hoa_don.tieu_thu
-        bac_truoc = 0
-        
-        for i, (dinh_muc, don_gia) in enumerate(bang_gia.bac_thang):
-            # Tính số điện tiêu thụ trong bậc hiện tại
-            so_dien_trong_bac = min(dinh_muc - bac_truoc, so_dien_con_lai)
-            if so_dien_trong_bac <= 0:
-                break
-            
-            # Tính tiền điện trong bậc hiện tại
-            tien_dien = so_dien_trong_bac * don_gia
-            
-            # Thêm vào danh sách
-            tieu_thu_theo_bac.append({
-                'bac': i + 1,
-                'tu_den': f"{bac_truoc + 1} - {dinh_muc}",
-                'so_dien': so_dien_trong_bac,
-                'don_gia': don_gia,
-                'thanh_tien': tien_dien
-            })
-            
-            # Cập nhật số điện còn lại và bậc trước
-            so_dien_con_lai -= so_dien_trong_bac
-            bac_truoc = dinh_muc
-            
-            if so_dien_con_lai <= 0:
-                break
-        
-        # Nếu vẫn còn điện chưa tính (vượt quá bậc cao nhất)
-        if so_dien_con_lai > 0 and len(bang_gia.bac_thang) > 0:
-            # Lấy đơn giá của bậc cao nhất
-            _, don_gia_cao_nhat = bang_gia.bac_thang[-1]
-            tien_dien = so_dien_con_lai * don_gia_cao_nhat
-            
-            # Thêm vào danh sách
-            tieu_thu_theo_bac.append({
-                'bac': len(bang_gia.bac_thang) + 1,
-                'tu_den': f"> {bac_truoc}",
-                'so_dien': so_dien_con_lai,
-                'don_gia': don_gia_cao_nhat,
-                'thanh_tien': tien_dien
-            })
-        
-        # Tạo dữ liệu cho bảng tính tiền điện
-        tien_dien_data = [
-            ['BẬC', 'MỨC TIÊU THỤ (kWh)', 'SỐ LƯỢNG (kWh)', 'ĐƠN GIÁ (đ/kWh)', 'THÀNH TIỀN (đ)']
-        ]
-        
-        tong_tien = 0
-        for bac in tieu_thu_theo_bac:
-            tien_dien_data.append([
-                str(bac['bac']),
-                bac['tu_den'],
-                str(bac['so_dien']),
-                f"{bac['don_gia']:,.0f}".replace(',', '.'),
-                f"{bac['thanh_tien']:,.0f}".replace(',', '.')
-            ])
-            tong_tien += bac['thanh_tien']
-        
-        # Thêm dòng tổng tiền
-        tien_dien_data.append([
-            '', 'TỔNG CỘNG', str(hoa_don.tieu_thu),
-            '', f"{tong_tien:,.0f}".replace(',', '.')
-        ])
-        
-        # Tạo bảng tính tiền điện
-        tien_dien_table = Table(tien_dien_data, colWidths=[40, 120, 80, 110, 130])
-        tien_dien_table.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -2), 0.5, colors.grey),
-            ('LINEABOVE', (0, -1), (-1, -1), 1, VTN_ORANGE),
-            ('BACKGROUND', (0, 0), (-1, 0), VTN_ORANGE),
-            ('BACKGROUND', (0, -1), (-1, -1), VTN_LIGHT_YELLOW),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('ALIGN', (1, 1), (1, -2), 'LEFT'),
-            ('ALIGN', (4, 1), (4, -1), 'RIGHT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Roboto-Bold'),
-            ('FONTNAME', (0, -1), (-1, -1), 'Roboto-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('SPAN', (0, -1), (1, -1)),
-            ('SPAN', (3, -1), (3, -1)),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('BOX', (0, 0), (-1, -1), 1, VTN_YELLOW),
-        ]))
-        
-        elements.append(tien_dien_table)
-        elements.append(Spacer(1, 15))
-        
-        # ===== TỔNG CỘNG =====
-        elements.append(Paragraph("TỔNG CỘNG TIỀN ĐIỆN", self.heading_style))
-        
-        # Thêm các khoản phụ thu, thuế, v.v. nếu có
-        thue_vat = tong_tien * 0.1  # Thuế VAT 10%
-        tong_cong = tong_tien + thue_vat
-        
-        tong_cong_data = [
-            ['KHOẢN MỤC', 'THÀNH TIỀN (đ)'],
-            ['Tiền điện', f"{tong_tien:,.0f}".replace(',', '.')],
-            ['Thuế GTGT (10%)', f"{thue_vat:,.0f}".replace(',', '.')],
-            ['TỔNG CỘNG', f"{tong_cong:,.0f}".replace(',', '.')]
-        ]
+        # ===== TỔNG TIỀN =====
+        try:
+            # Tổng tiền (đã bao gồm VAT)
+            tong_tien = getattr(hoa_don, 'so_tien', 0)
+            if tong_tien is None:
+                tong_tien = 0
+        except Exception as e:
+            print(f"Lỗi khi lấy số tiền: {e}")
+            tong_tien = 0
         
         # Hiển thị số tiền bằng chữ
-        so_tien_bang_chu = self.doc_so_thanh_chu(int(tong_cong))
+        try:
+            so_tien_bang_chu = self.doc_so_thanh_chu(int(tong_tien))
+        except:
+            so_tien_bang_chu = "Không đồng"
+            
+        # Bảng tổng cộng - thiết kế hiện đại
+        tong_cong_data = [
+            ['KHOẢN MỤC', 'THÀNH TIỀN (đ)'],
+            ['TỔNG CỘNG (đã bao gồm VAT)', f"{int(tong_tien):,}".replace(',', '.')]
+        ]
         
-        # Tạo bảng tổng cộng
         tong_cong_table = Table(tong_cong_data, colWidths=[240, 240])
         tong_cong_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (-1, 0), VTN_ORANGE),
-            ('BACKGROUND', (0, -1), (-1, -1), VTN_YELLOW),
+            ('BACKGROUND', (0, 1), (-1, 1), VTN_DARK_BG),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('TEXTCOLOR', (0, -1), (-1, -1), colors.white),
+            ('TEXTCOLOR', (0, 1), (-1, 1), colors.white),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, 0), 'Roboto-Bold'),
-            ('FONTNAME', (0, -1), (-1, -1), 'Roboto-Bold'),
-            ('FONTSIZE', (0, -1), (-1, -1), 11),
+            ('FONTNAME', (0, 1), (-1, 1), 'Roboto-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 1), (-1, 1), 12),
             ('LEFTPADDING', (0, 0), (-1, -1), 10),
             ('RIGHTPADDING', (0, 0), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             ('BOX', (0, 0), (-1, -1), 1, VTN_YELLOW),
+            ('ROUNDEDCORNERS', [5, 5, 5, 5]),
         ]))
         
         elements.append(tong_cong_table)
@@ -544,49 +642,73 @@ class HoaDonPDF:
         # Hiển thị số tiền bằng chữ
         elements.append(Paragraph(f"<i>Bằng chữ: <b>{so_tien_bang_chu}</b></i>", self.value_style))
         
-        # Biên nhận
-        elements.append(Spacer(1, 25))
-        
-        # Tạo bảng chữ ký
-        if hoa_don.da_thanh_toan:
-            signature_data = [
-                ['NGƯỜI LẬP HÓA ĐƠN', 'KHÁCH HÀNG'],
-                ['(Ký, ghi rõ họ tên)', '(Ký, ghi rõ họ tên)'],
-                ['', ''],
-                ['', ''],
-                ['', ''],
-                ['VTN VIP', khach_hang.ho_ten]
+        # Thêm dấu đã thanh toán nếu đã thanh toán
+        if da_thanh_toan:
+            elements.append(Spacer(1, 10))
+            
+            # Tạo bảng chứa thông tin thanh toán và dấu đã thanh toán
+            payment_info = [
+                [Paragraph(f"<font color='green'>ĐÃ THANH TOÁN</font>", 
+                        ParagraphStyle('PaymentStyle', parent=self.value_style, 
+                                      fontSize=14, alignment=TA_CENTER, fontName='Roboto-Bold')),
+                PaidStamp()]
             ]
+            
+            payment_table = Table(payment_info, colWidths=[400, 80])
+            payment_table.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+                ('VALIGN', (0, 0), (1, 0), 'MIDDLE'),
+            ]))
+            
+            elements.append(payment_table)
         else:
-            signature_data = [
-                ['NGƯỜI LẬP HÓA ĐƠN', ''],
-                ['(Ký, ghi rõ họ tên)', ''],
-                ['', ''],
-                ['', ''],
-                ['', ''],
-                ['VTN VIP', '']
-            ]
+            # Hiển thị trạng thái chưa thanh toán
+            trang_thai_style = ParagraphStyle(
+                name='TrangThai_Style',
+                fontName='Roboto-Bold',
+                fontSize=14,
+                leading=16,
+                textColor='red',
+                alignment=TA_CENTER,
+                spaceBefore=15
+            )
+            
+            elements.append(Paragraph("CHƯA THANH TOÁN", trang_thai_style))
         
-        signature_table = Table(signature_data, colWidths=[240, 240])
-        signature_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Roboto-Bold'),
-            ('FONTNAME', (0, -1), (-1, -1), 'Roboto-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 1), 10),
-            ('FONTSIZE', (0, -1), (-1, -1), 10),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ]))
+        # Thêm thông tin bổ sung và lưu ý
+        elements.append(Spacer(1, 20))
         
-        elements.append(signature_table)
+        note_style = ParagraphStyle(
+            name='Note_Style',
+            fontName='Roboto',
+            fontSize=9,
+            textColor=colors.lightgrey,
+            alignment=TA_LEFT
+        )
+        
+        elements.append(Paragraph(
+            "<i>Lưu ý: Hóa đơn này đã được số hóa và có giá trị pháp lý tương đương với hóa đơn giấy. "
+            "Quý khách có thể thanh toán qua các kênh ngân hàng, ví điện tử hoặc tại các điểm thu hộ được ủy quyền.</i>", 
+            note_style
+        ))
         
         # Build the PDF
-        doc.build(elements)
-        return file_name
+        try:
+            doc.build(elements)
+            return file_name
+        except Exception as e:
+            print(f"Lỗi khi tạo file PDF: {e}")
+            return None
 
 # Hàm tiện ích để tạo hóa đơn trực tiếp từ mã hóa đơn
 def tao_hoa_don_pdf(hoa_don, khach_hang, bang_gia, output_dir="exports"):
     """Hàm tiện ích để tạo hóa đơn PDF"""
-    generator = HoaDonPDF()
-    return generator.tao_hoa_don(hoa_don, khach_hang, bang_gia, output_dir) 
+    # Tạo một instance mới để tránh lỗi reference
+    try:
+        # Tạo PDF generator và tạo hóa đơn
+        generator = HoaDonPDF()
+        return generator.tao_hoa_don(hoa_don, khach_hang, bang_gia, output_dir)
+    except Exception as e:
+        print(f"Lỗi khi tạo hóa đơn PDF: {e}")
+        return None 

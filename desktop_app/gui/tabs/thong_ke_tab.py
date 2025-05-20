@@ -18,6 +18,20 @@ from PyQt6.QtPrintSupport import QPrinter
 from PyQt6.QtGui import QPainter, QTextDocument
 from PyQt6.QtCore import QSize, QRectF, QPoint, QSizeF
 
+# Định nghĩa các màu chủ đạo theo logo VTN
+VTN_YELLOW = "#FFB300"  # Màu vàng chính
+VTN_ORANGE = "#FF9800"  # Màu cam
+VTN_BACKGROUND = "#FFFDE7"  # Màu nền nhạt
+VTN_TEXT = "#212121"  # Màu chữ
+VTN_DARK_BG = "#121212"  # Màu nền tối
+VTN_DARKER_BG = "#1E1E1E"  # Màu nền tối hơn cho các panel
+VTN_LIGHT_TEXT = "#EEEEEE"  # Màu chữ sáng
+VTN_ACCENT = "#FFC107"  # Màu nhấn
+VTN_RED = "#D32F2F"  # Màu đỏ cho nút xóa
+VTN_RED_HOVER = "#B71C1C"  # Màu đỏ đậm hơn khi hover
+VTN_YELLOW_HOVER = "#FFA000"  # Màu vàng đậm hơn khi hover
+VTN_GRAY_BORDER = "#555555"  # Màu viền xám đậm
+
 class ThongKeTab(QWidget):
     """
     Tab thống kê và báo cáo
@@ -41,6 +55,33 @@ class ThongKeTab(QWidget):
         
         # Tạo tab widget
         self.thong_ke_tabs = QTabWidget()
+        self.thong_ke_tabs.setStyleSheet(f"""
+            QTabWidget::pane {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                background-color: {VTN_DARKER_BG};
+                border-radius: 6px;
+            }}
+            QTabBar::tab {{
+                background-color: {VTN_DARK_BG};
+                color: {VTN_LIGHT_TEXT};
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-bottom-color: {VTN_DARKER_BG};
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                padding: 8px 12px;
+                margin-right: 2px;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QTabBar::tab:selected {{
+                background-color: {VTN_YELLOW};
+                color: white;
+                border-bottom-color: {VTN_YELLOW};
+                font-weight: bold;
+            }}
+            QTabBar::tab:hover:!selected {{
+                background-color: {VTN_DARKER_BG};
+            }}
+        """)
         
         # Tạo các tab con
         self.tieu_thu_tab = QWidget()
@@ -72,34 +113,110 @@ class ThongKeTab(QWidget):
     def setup_tieu_thu_tab(self):
         """Thiết lập tab thống kê tiêu thụ điện"""
         layout = QVBoxLayout(self.tieu_thu_tab)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
         
         # Khu vực bộ lọc
         filter_group = QGroupBox("Bộ lọc")
+        filter_group.setStyleSheet(f"""
+            QGroupBox {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
+                margin-top: 12px;
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+                color: {VTN_YELLOW};
+                font-weight: bold;
+            }}
+        """)
         filter_layout = QHBoxLayout(filter_group)
         
         # Chọn loại thống kê
+        loai_thong_ke_label = QLabel("Loại thống kê:")
+        loai_thong_ke_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT}; background-color: {VTN_DARKER_BG}; font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;")
+        
         self.tieu_thu_type_combo = QComboBox()
         self.tieu_thu_type_combo.addItems(["Theo tháng", "Theo quý", "Theo năm"])
+        self.tieu_thu_type_combo.setFixedWidth(130)
+        self.tieu_thu_type_combo.setStyleSheet(f"""
+            border: 1px solid {VTN_DARKER_BG};
+            border-radius: 7px;
+            outline: none;
+            padding: 5px;
+            color: {VTN_LIGHT_TEXT};
+            font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+        """)
         
         # Chọn năm
+        nam_label = QLabel("Năm:")
+        nam_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT}; background-color: {VTN_DARKER_BG}; font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;")
+        
         self.tieu_thu_year_combo = QComboBox()
         current_year = datetime.datetime.now().year
         for year in range(current_year - 5, current_year + 1):
             self.tieu_thu_year_combo.addItem(str(year))
         self.tieu_thu_year_combo.setCurrentText(str(current_year))
+        # self.tieu_thu_type_combo.setFixedWidth(60)
+        self.tieu_thu_year_combo.setStyleSheet(f"""
+            border: 1px solid {VTN_DARKER_BG};
+            border-radius: 4px;
+            outline: none;
+            width: 100px;
+            padding: 5px;
+            color: {VTN_LIGHT_TEXT};
+            font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+        """)
         
         # Nút áp dụng
         self.tieu_thu_apply_button = QPushButton("Áp dụng")
+        self.tieu_thu_apply_button.setIcon(QIcon("../assets/icons/confirm.svg"))
         self.tieu_thu_apply_button.clicked.connect(self.update_tieu_thu_chart)
+        self.tieu_thu_apply_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.tieu_thu_apply_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Nút xuất báo cáo
         self.tieu_thu_export_button = QPushButton("Xuất báo cáo")
+        self.tieu_thu_export_button.setIcon(QIcon("../assets/icons/export.svg"))
         self.tieu_thu_export_button.clicked.connect(self.export_tieu_thu_report)
+        self.tieu_thu_export_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.tieu_thu_export_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Thêm các controls vào layout
-        filter_layout.addWidget(QLabel("Loại thống kê:"))
+        filter_layout.addWidget(loai_thong_ke_label)
         filter_layout.addWidget(self.tieu_thu_type_combo)
-        filter_layout.addWidget(QLabel("Năm:"))
+        filter_layout.addWidget(nam_label)
         filter_layout.addWidget(self.tieu_thu_year_combo)
         filter_layout.addStretch()
         filter_layout.addWidget(self.tieu_thu_apply_button)
@@ -109,11 +226,17 @@ class ThongKeTab(QWidget):
         
         # Tạo khu vực hiển thị biểu đồ
         self.tieu_thu_plot_widget = QWidget()
+        self.tieu_thu_plot_widget.setStyleSheet(f"""
+            background-color: {VTN_DARKER_BG};
+            border: 1px solid {VTN_GRAY_BORDER};
+            border-radius: 6px;
+        """)
         self.tieu_thu_plot_layout = QVBoxLayout(self.tieu_thu_plot_widget)
         
         # Tạo biểu đồ trống
-        self.tieu_thu_figure = Figure(figsize=(8, 5))
+        self.tieu_thu_figure = Figure(figsize=(8, 5), facecolor=VTN_DARKER_BG)
         self.tieu_thu_canvas = FigureCanvas(self.tieu_thu_figure)
+        self.tieu_thu_canvas.setStyleSheet(f"background-color: {VTN_DARKER_BG};")
         self.tieu_thu_plot_layout.addWidget(self.tieu_thu_canvas)
         
         layout.addWidget(self.tieu_thu_plot_widget)
@@ -121,34 +244,107 @@ class ThongKeTab(QWidget):
     def setup_doanh_thu_tab(self):
         """Thiết lập tab thống kê doanh thu"""
         layout = QVBoxLayout(self.doanh_thu_tab)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
         
         # Khu vực bộ lọc
         filter_group = QGroupBox("Bộ lọc")
+        filter_group.setStyleSheet(f"""
+            QGroupBox {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
+                margin-top: 12px;
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+                color: {VTN_YELLOW};
+                font-weight: bold;
+            }}
+        """)
         filter_layout = QHBoxLayout(filter_group)
         
         # Chọn loại thống kê
+        loai_thong_ke_label = QLabel("Loại thống kê:")
+        loai_thong_ke_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT}; font-family: 'Roboto', 'Arial', sans-serif;")
+        
         self.doanh_thu_type_combo = QComboBox()
         self.doanh_thu_type_combo.addItems(["Theo tháng", "Theo quý", "Theo năm"])
+        self.doanh_thu_type_combo.setStyleSheet(f"""
+            border: 1px solid {VTN_GRAY_BORDER};
+            border-radius: 4px;
+            padding: 5px;
+            background-color: {VTN_DARK_BG};
+            color: {VTN_LIGHT_TEXT};
+            font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+        """)
         
         # Chọn năm
+        nam_label = QLabel("Năm:")
+        nam_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT}; font-family: 'Roboto', 'Arial', sans-serif;")
+        
         self.doanh_thu_year_combo = QComboBox()
         current_year = datetime.datetime.now().year
         for year in range(current_year - 5, current_year + 1):
             self.doanh_thu_year_combo.addItem(str(year))
         self.doanh_thu_year_combo.setCurrentText(str(current_year))
+        self.doanh_thu_year_combo.setStyleSheet(f"""
+            border: 1px solid {VTN_GRAY_BORDER};
+            border-radius: 4px;
+            padding: 5px;
+            background-color: {VTN_DARK_BG};
+            color: {VTN_LIGHT_TEXT};
+            font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+        """)
         
         # Nút áp dụng
         self.doanh_thu_apply_button = QPushButton("Áp dụng")
+        self.doanh_thu_apply_button.setIcon(QIcon("../assets/icons/confirm.svg"))
         self.doanh_thu_apply_button.clicked.connect(self.update_doanh_thu_chart)
+        self.doanh_thu_apply_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.doanh_thu_apply_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Nút xuất báo cáo
         self.doanh_thu_export_button = QPushButton("Xuất báo cáo")
+        self.doanh_thu_export_button.setIcon(QIcon("../assets/icons/export.svg"))
         self.doanh_thu_export_button.clicked.connect(self.export_doanh_thu_report)
+        self.doanh_thu_export_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.doanh_thu_export_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Thêm các controls vào layout
-        filter_layout.addWidget(QLabel("Loại thống kê:"))
+        filter_layout.addWidget(loai_thong_ke_label)
         filter_layout.addWidget(self.doanh_thu_type_combo)
-        filter_layout.addWidget(QLabel("Năm:"))
+        filter_layout.addWidget(nam_label)
         filter_layout.addWidget(self.doanh_thu_year_combo)
         filter_layout.addStretch()
         filter_layout.addWidget(self.doanh_thu_apply_button)
@@ -158,11 +354,17 @@ class ThongKeTab(QWidget):
         
         # Tạo khu vực hiển thị biểu đồ
         self.doanh_thu_plot_widget = QWidget()
+        self.doanh_thu_plot_widget.setStyleSheet(f"""
+            background-color: {VTN_DARKER_BG};
+            border: 1px solid #555;
+            border-radius: 6px;
+        """)
         self.doanh_thu_plot_layout = QVBoxLayout(self.doanh_thu_plot_widget)
         
         # Tạo biểu đồ trống
-        self.doanh_thu_figure = Figure(figsize=(8, 5))
+        self.doanh_thu_figure = Figure(figsize=(8, 5), facecolor=VTN_DARKER_BG)
         self.doanh_thu_canvas = FigureCanvas(self.doanh_thu_figure)
+        self.doanh_thu_canvas.setStyleSheet(f"background-color: {VTN_DARKER_BG};")
         self.doanh_thu_plot_layout.addWidget(self.doanh_thu_canvas)
         
         layout.addWidget(self.doanh_thu_plot_widget)
@@ -170,9 +372,40 @@ class ThongKeTab(QWidget):
     def setup_bao_cao_tab(self):
         """Thiết lập tab báo cáo"""
         layout = QVBoxLayout(self.bao_cao_tab)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(15)
         
         # Khu vực chọn loại báo cáo
         report_type_group = QGroupBox("Loại Báo Cáo")
+        report_type_group.setStyleSheet(f"""
+            QGroupBox {{
+                border: 1px solid #555;
+                border-radius: 6px;
+                margin-top: 12px;
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_LIGHT_TEXT};
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+                color: {VTN_YELLOW};
+            }}
+            QRadioButton {{
+                color: {VTN_LIGHT_TEXT};
+                spacing: 5px;
+            }}
+            QRadioButton::indicator {{
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                border: 1px solid #777;
+            }}
+            QRadioButton::indicator:checked {{
+                background-color: {VTN_YELLOW};
+                border: 2px solid white;
+            }}
+        """)
         report_type_layout = QVBoxLayout(report_type_group)
         
         # Radio buttons cho các loại báo cáo
@@ -203,11 +436,44 @@ class ThongKeTab(QWidget):
         button_layout = QHBoxLayout()
         
         self.generate_report_button = QPushButton("Tạo báo cáo")
+        self.generate_report_button.setIcon(QIcon("../assets/icons/add.svg"))
         self.generate_report_button.clicked.connect(self.generate_report)
+        self.generate_report_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.generate_report_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         # Thêm nút xuất báo cáo PDF
         self.export_pdf_button = QPushButton("Xuất PDF")
+        self.export_pdf_button.setIcon(QIcon("../assets/icons/pdf.svg"))
         self.export_pdf_button.clicked.connect(self.export_report_to_pdf)
+        self.export_pdf_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 4px;
+                padding: 8px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+                
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.export_pdf_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         button_layout.addStretch()
         button_layout.addWidget(self.generate_report_button)
@@ -217,6 +483,28 @@ class ThongKeTab(QWidget):
         
         # Khu vực hiển thị báo cáo
         self.report_table = QTableWidget()
+        self.report_table.setStyleSheet(f"""
+            QTableWidget {{
+                border: 1px solid #555;
+                border-radius: 4px;
+                background-color: {VTN_DARK_BG};
+                gridline-color: #555;
+                color: {VTN_LIGHT_TEXT};
+            }}
+            QTableWidget::item {{
+                padding: 5px;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {VTN_YELLOW};
+                color: white;
+            }}
+            QHeaderView::section {{
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_YELLOW};
+                padding: 5px;
+                border: 1px solid #555;
+            }}
+        """)
         
         # Cài đặt thuộc tính bảng để cột mở rộng đầy đủ
         self.report_table.horizontalHeader().setMinimumSectionSize(80)
@@ -312,24 +600,35 @@ class ThongKeTab(QWidget):
         # Vẽ biểu đồ cột
         bars = ax.bar(x_ticks, y_values, width=0.6, color='skyblue', edgecolor='black')
         
-        # Thêm giá trị lên đầu mỗi cột
+        # Thêm giá trị lên đầu cột
         for bar, value in zip(bars, y_values):
             height = bar.get_height()
-            if height > 0:  # Chỉ hiển thị giá trị > 0
-                ax.text(bar.get_x() + bar.get_width() / 2, height + 5, str(int(value)), 
-                        ha='center', va='bottom')
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + 5,
+                f"{int(value):,}",
+                ha='center',
+                va='bottom',
+                color='white'
+            )
         
-        # Đặt tiêu đề và nhãn
-        ax.set_title(title)
-        ax.set_xlabel("Thời gian")
-        ax.set_ylabel("Lượng điện tiêu thụ (kWh)")
-        
-        # Đặt nhãn trục x
+        # Chỉnh sửa trục và nhãn
         ax.set_xticks(x_ticks)
-        ax.set_xticklabels(x_labels)
+        ax.set_xticklabels(x_labels, color='white')
+        ax.yaxis.set_tick_params(labelcolor='white')
+        
+        # Đặt tiêu đề và nhãn trục
+        ax.set_title(title, color='white', fontsize=14)
+        ax.set_xlabel("Thời gian", color='white')
+        ax.set_ylabel("Lượng tiêu thụ (kWh)", color='white')
         
         # Thêm lưới
-        ax.grid(axis='y', linestyle='--', alpha=0.7)
+        ax.grid(axis='y', linestyle='--', alpha=0.3)
+        
+        # Đặt màu nền và viền cho biểu đồ
+        ax.set_facecolor(VTN_DARKER_BG)
+        for spine in ax.spines.values():
+            spine.set_color('#555')
         
         # Cập nhật biểu đồ
         self.tieu_thu_canvas.draw()
@@ -396,26 +695,37 @@ class ThongKeTab(QWidget):
         ax = self.doanh_thu_figure.add_subplot(111)
         
         # Vẽ biểu đồ cột
-        bars = ax.bar(x_ticks, y_values, width=0.6, color='lightgreen', edgecolor='black')
+        bars = ax.bar(x_ticks, y_values, width=0.6, color=VTN_YELLOW, edgecolor='black')
         
-        # Thêm giá trị lên đầu mỗi cột
+        # Thêm giá trị lên đầu cột
         for bar, value in zip(bars, y_values):
             height = bar.get_height()
-            if height > 0:  # Chỉ hiển thị giá trị > 0
-                ax.text(bar.get_x() + bar.get_width() / 2, height + 0.1, f"{value:.1f}", 
-                        ha='center', va='bottom')
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                height + 0.1,
+                f"{value:.1f}",
+                ha='center',
+                va='bottom',
+                color='white'
+            )
         
-        # Đặt tiêu đề và nhãn
-        ax.set_title(title)
-        ax.set_xlabel("Thời gian")
-        ax.set_ylabel("Doanh thu (triệu VNĐ)")
-        
-        # Đặt nhãn trục x
+        # Chỉnh sửa trục và nhãn
         ax.set_xticks(x_ticks)
-        ax.set_xticklabels(x_labels)
+        ax.set_xticklabels(x_labels, color='white')
+        ax.yaxis.set_tick_params(labelcolor='white')
+        
+        # Đặt tiêu đề và nhãn trục
+        ax.set_title(title, color='white', fontsize=14)
+        ax.set_xlabel("Thời gian", color='white')
+        ax.set_ylabel("Doanh thu (triệu VNĐ)", color='white')
         
         # Thêm lưới
-        ax.grid(axis='y', linestyle='--', alpha=0.7)
+        ax.grid(axis='y', linestyle='--', alpha=0.3)
+        
+        # Đặt màu nền và viền cho biểu đồ
+        ax.set_facecolor(VTN_DARKER_BG)
+        for spine in ax.spines.values():
+            spine.set_color('#555')
         
         # Cập nhật biểu đồ
         self.doanh_thu_canvas.draw()
@@ -1033,19 +1343,6 @@ class ThongKeTab(QWidget):
                                         # Loại bỏ số 0 thừa sau dấu thập phân
                                         text = f"{value:.2f}".rstrip('0').rstrip('.') if '.' in f"{value:.2f}" else f"{value:.2f}"
                                         text = f"{float(text):,}".replace('.0,', ',')
-                            elif text.replace(".", "", 1).isdigit():  # Nếu là số thập phân
-                                value = float(text)
-                                if "tiền" in headers[col].lower() or "VNĐ" in headers[col]:
-                                    # Làm tròn về số nguyên cho tiền VNĐ
-                                    text = f"{int(value):,}"
-                                else:
-                                    # Định dạng cho các số khác
-                                    if value == int(value):  # Nếu là số nguyên
-                                        text = f"{int(value):,}"
-                                    else:
-                                        # Loại bỏ số 0 thừa sau dấu thập phân
-                                        text = f"{value:.2f}".rstrip('0').rstrip('.') if '.' in f"{value:.2f}" else f"{value:.2f}"
-                                        text = f"{float(text):,}".replace('.0,', ',')
                         except:
                             pass  # Nếu không phải số, giữ nguyên text
                         
@@ -1142,4 +1439,19 @@ class ThongKeTab(QWidget):
             
         except Exception as e:
             print(f"Lỗi khi xuất báo cáo PDF: {e}")
-            QMessageBox.critical(self, "Lỗi", f"Lỗi khi xuất báo cáo: {str(e)}") 
+            QMessageBox.critical(self, "Lỗi", f"Lỗi khi xuất báo cáo: {str(e)}")
+
+    def load_data(self):
+        """Tải dữ liệu thống kê và báo cáo"""
+        try:
+            # Xác định tab đang được hiển thị
+            current_tab = self.thong_ke_tabs.currentWidget()
+            
+            if current_tab == self.tieu_thu_tab:
+                self.update_tieu_thu_chart()
+            elif current_tab == self.doanh_thu_tab:
+                self.update_doanh_thu_chart()
+            elif current_tab == self.bao_cao_tab:
+                self.generate_report()
+        except Exception as e:
+            QMessageBox.warning(self, "Lỗi", f"Không thể tải dữ liệu thống kê: {str(e)}") 

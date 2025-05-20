@@ -17,6 +17,14 @@ VTN_YELLOW = "#FFB300"  # Màu vàng chính
 VTN_ORANGE = "#FF9800"  # Màu cam
 VTN_BACKGROUND = "#FFFDE7"  # Màu nền nhạt
 VTN_TEXT = "#212121"  # Màu chữ
+VTN_DARK_BG = "#121212"  # Màu nền tối
+VTN_DARKER_BG = "#1E1E1E"  # Màu nền tối hơn cho các panel
+VTN_LIGHT_TEXT = "#EEEEEE"  # Màu chữ sáng
+VTN_ACCENT = "#FFC107"  # Màu nhấn
+VTN_RED = "#D32F2F"  # Màu đỏ cho nút xóa
+VTN_RED_HOVER = "#B71C1C"  # Màu đỏ đậm hơn khi hover
+VTN_YELLOW_HOVER = "#FFA000"  # Màu vàng đậm hơn khi hover
+VTN_GRAY_BORDER = "#555555"  # Màu viền xám đậm
 
 class BangGiaDialog(QDialog):
     """
@@ -40,24 +48,27 @@ class BangGiaDialog(QDialog):
     def init_ui(self):
         """Khởi tạo giao diện dialog"""
         # Thiết lập cửa sổ
-        title = "Thêm Bảng Giá Mới" if not self.bang_gia else "Sửa Bảng Giá Điện"
+        title = "Thêm Bảng Giá Điện Mới" if not self.bang_gia else "Sửa Bảng Giá Điện"
         self.setWindowTitle(title)
-        self.setMinimumWidth(550)
-        self.setMinimumHeight(600)
+        self.setMinimumWidth(750)
+        self.setMinimumHeight(500)
         self.setStyleSheet(f"""
             QDialog {{
-                background-color: {VTN_BACKGROUND};
+                background-color: {VTN_DARK_BG};
                 border-radius: 8px;
             }}
             QLabel {{
                 font-weight: bold;
-                color: {VTN_TEXT};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto', 'Arial', sans-serif;
             }}
-            QDateEdit, QDoubleSpinBox {{
-                border: 1px solid #ddd;
+            QLineEdit, QDateEdit, QDoubleSpinBox, QSpinBox {{
+                border: 1px solid {VTN_GRAY_BORDER};
                 border-radius: 4px;
                 padding: 8px;
-                background-color: white;
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto', 'Arial', sans-serif;
             }}
             QPushButton {{
                 background-color: {VTN_YELLOW};
@@ -67,25 +78,23 @@ class BangGiaDialog(QDialog):
                 padding: 8px 15px;
                 font-weight: bold;
                 min-width: 100px;
+                font-family: 'Roboto', 'Arial', sans-serif;
             }}
             QPushButton:hover {{
-                background-color: {VTN_ORANGE};
+                background-color: {VTN_YELLOW_HOVER};
             }}
-            QPushButton#deleteButton {{
-                background-color: #f44336;
-                padding: 5px 10px;
-                min-width: 60px;
+            QPushButton:disabled {{
+                background-color: #555;
+                color: #888;
             }}
-            QPushButton#addButton {{
-                background-color: #4CAF50;
-                padding: 8px 10px;
+            QScrollArea, QGroupBox {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
             }}
             QGroupBox {{
-                font-weight: bold;
-                border: 1px solid #ddd;
-                border-radius: 6px;
-                margin-top: 20px;
-                background-color: white;
+                margin-top: 12px;
+                background-color: {VTN_DARKER_BG};
+                font-family: 'Roboto', 'Arial', sans-serif;
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
@@ -106,7 +115,7 @@ class BangGiaDialog(QDialog):
         header_layout = QHBoxLayout(header_frame)
         
         header_label = QLabel(title)
-        header_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        header_label.setFont(QFont("Roboto", 14, QFont.Weight.Bold))
         header_label.setStyleSheet("color: white;")
         header_layout.addWidget(header_label)
         
@@ -114,7 +123,7 @@ class BangGiaDialog(QDialog):
         
         # Form chính
         main_frame = QFrame()
-        main_frame.setStyleSheet("background-color: white; border-radius: 6px; padding: 10px;")
+        main_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 6px; padding: 10px;")
         main_layout = QVBoxLayout(main_frame)
         
         # Form layout cho thông tin chung
@@ -148,68 +157,34 @@ class BangGiaDialog(QDialog):
         bac_thang_group = QGroupBox("Bảng Giá Điện Theo Bậc Thang")
         bac_thang_layout = QVBoxLayout(bac_thang_group)
         
+        # Scroll area cho nhiều bậc thang
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background-color: transparent;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #f0f0f0;
-                width: 8px;
-            }
-            QScrollBar::handle:vertical {
-                background: #FFB300;
-                min-height: 20px;
-                border-radius: 4px;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0px;
-            }
-        """)
+        scroll_area.setStyleSheet(f"background-color: {VTN_DARKER_BG};")
         
-        bac_thang_container = QWidget()
-        self.bac_thang_layout = QVBoxLayout(bac_thang_container)
-        self.bac_thang_layout.setSpacing(10)
+        # Widget chứa các bậc thang
+        self.bac_thang_widget = QWidget()
+        self.bac_thang_widget.setStyleSheet(f"background-color: {VTN_DARKER_BG};")
+        self.bac_thang_container = QVBoxLayout(self.bac_thang_widget)
+        self.bac_thang_container.setContentsMargins(5, 5, 5, 5)
+        self.bac_thang_container.setSpacing(10)
         
-        # Tiêu đề
-        bac_thang_title = QLabel("Cấu hình các mức giá theo lượng điện tiêu thụ")
-        bac_thang_title.setFont(QFont("Arial", 10))
-        bac_thang_title.setStyleSheet(f"color: {VTN_TEXT}; font-weight: normal;")
-        bac_thang_title.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.bac_thang_layout.addWidget(bac_thang_title)
-        
-        # Nếu có bảng giá sẵn, hiển thị dữ liệu
-        if self.bang_gia:
-            for i, (kwh_max, don_gia) in enumerate(self.bang_gia.bac_thang):
-                self.add_bac_thang_ui(i+1, kwh_max, don_gia)
-        else:
-            # Thêm bậc thang mặc định của EVN
-            default_bac_thang = [
-                (50, 1728),     # Bậc 1: 0-50 kWh
-                (100, 1786),    # Bậc 2: 51-100 kWh
-                (200, 2074),    # Bậc 3: 101-200 kWh
-                (300, 2612),    # Bậc 4: 201-300 kWh
-                (400, 2919),    # Bậc 5: 301-400 kWh
-                (float('inf'), 3015)  # Bậc 6: Trên 400 kWh
-            ]
-            
-            for i, (kwh_max, don_gia) in enumerate(default_bac_thang):
-                self.add_bac_thang_ui(i+1, kwh_max, don_gia)
-        
-        # Nút thêm bậc thang mới
-        add_bac_button = QPushButton("+ Thêm bậc thang mới")
-        add_bac_button.setObjectName("addButton")
-        add_bac_button.setIcon(QIcon.fromTheme("add"))
-        add_bac_button.clicked.connect(self.on_add_bac_thang)
-        self.bac_thang_layout.addWidget(add_bac_button)
-        
-        scroll_area.setWidget(bac_thang_container)
+        # Thêm widget vào scroll area
+        scroll_area.setWidget(self.bac_thang_widget)
         bac_thang_layout.addWidget(scroll_area)
         
+        # Thêm nút thêm bậc thang mới
+        add_button_layout = QHBoxLayout()
+        self.add_bac_button = QPushButton("Thêm bậc thang")
+        self.add_bac_button.setIcon(QIcon.fromTheme("add"))
+        self.add_bac_button.clicked.connect(self.add_bac_thang)
+        add_button_layout.addStretch()
+        add_button_layout.addWidget(self.add_bac_button)
+        bac_thang_layout.addLayout(add_button_layout)
+        
         main_layout.addWidget(bac_thang_group)
+        
+        # Thêm main frame vào layout chính
         layout.addWidget(main_frame)
         
         # Các nút
@@ -219,8 +194,8 @@ class BangGiaDialog(QDialog):
         self.save_button = QPushButton("Lưu")
         self.cancel_button = QPushButton("Hủy")
         self.cancel_button.setStyleSheet(f"""
-            background-color: #f0f0f0; 
-            color: {VTN_TEXT};
+            background-color: #555; 
+            color: {VTN_LIGHT_TEXT};
         """)
         
         button_layout.addStretch()
@@ -232,136 +207,134 @@ class BangGiaDialog(QDialog):
         # Kết nối các sự kiện
         self.save_button.clicked.connect(self.accept)
         self.cancel_button.clicked.connect(self.reject)
-    
-    def add_bac_thang_ui(self, bac_so, kwh_max=100, don_gia=1000):
-        """
-        Thêm UI cho một bậc thang giá
         
-        Args:
-            bac_so (int): Số thứ tự bậc
-            kwh_max (float): Giới hạn trên của bậc thang
-            don_gia (float): Đơn giá cho bậc thang
-        """
-        # Tạo frame cho bậc thang
+        # Nếu đang sửa thông tin, điền dữ liệu vào các trường
+        if self.bang_gia:
+            qdate = QDate(
+                self.bang_gia.ngay_ap_dung.year,
+                self.bang_gia.ngay_ap_dung.month,
+                self.bang_gia.ngay_ap_dung.day
+            )
+            self.ngay_ap_dung_date.setDate(qdate)
+            self.vat_spin.setValue(self.bang_gia.vat)
+            
+            # Thêm các bậc thang hiện tại
+            for i, (kwh_max, don_gia) in enumerate(self.bang_gia.bac_thang):
+                # Tạo UI cho bậc thang
+                self.add_bac_thang()
+                
+                # Cập nhật giá trị
+                bac_frame, kwh_spin, don_gia_spin, _ = self.bac_thang_inputs[i]
+                kwh_spin.setValue(int(kwh_max) if kwh_max != float('inf') else 0)
+                
+                # Nếu là bậc cuối cùng và giá trị là vô cùng, vô hiệu hóa trường KWh
+                if i == len(self.bang_gia.bac_thang) - 1 and kwh_max == float('inf'):
+                    kwh_spin.setEnabled(False)
+                
+                don_gia_spin.setValue(don_gia)
+        else:
+            # Thêm 3 bậc thang mặc định
+            for _ in range(3):
+                self.add_bac_thang()
+    
+    def add_bac_thang(self):
+        """Thêm một bậc thang mới vào form"""
+        # Tạo frame cho một bậc
         bac_frame = QFrame()
         bac_frame.setStyleSheet(f"""
             QFrame {{
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                background-color: {"#f9f9f9" if bac_so % 2 == 0 else "white"};
+                background-color: {VTN_DARKER_BG};
+                border: 1px solid #555;
+                border-radius: 6px;
                 padding: 5px;
             }}
         """)
         
-        # Layout cho bậc thang
         bac_layout = QHBoxLayout(bac_frame)
-        bac_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Tiêu đề bậc thang
-        bac_label = QLabel(f"Bậc {bac_so}")
-        bac_label.setStyleSheet(f"color: {VTN_ORANGE}; font-weight: bold;")
-        bac_label.setFixedWidth(50)
-        bac_layout.addWidget(bac_label)
+        # Số thứ tự bậc thang
+        bac_index = len(self.bac_thang_inputs) + 1
+        bac_label = QLabel(f"Bậc {bac_index}:")
+        bac_label.setStyleSheet("min-width: 60px;")
         
-        # Trường nhập kWh tối đa
+        # Khoảng kWh
+        kwh_label = QLabel("Đến:")
+        
         kwh_max_spin = QDoubleSpinBox()
         kwh_max_spin.setRange(1, 10000)
-        kwh_max_spin.setValue(kwh_max)
-        kwh_max_spin.setDecimals(0)
+        kwh_max_spin.setValue(100 * bac_index)  # Giá trị mặc định
         kwh_max_spin.setSuffix(" kWh")
-        kwh_max_spin.setMinimumWidth(150)
+        kwh_max_spin.setDecimals(0)
         
-        # Đặc biệt cho bậc cao nhất
-        if kwh_max == float('inf'):
-            kwh_max_spin.setSpecialValueText("Không giới hạn")
-            kwh_max_spin.setValue(10000)
-            kwh_max_spin.setEnabled(False)
+        # Đơn giá
+        don_gia_label = QLabel("Đơn giá:")
         
-        # Trường nhập đơn giá
         don_gia_spin = QDoubleSpinBox()
-        don_gia_spin.setRange(1, 100000)
-        don_gia_spin.setValue(don_gia)
-        don_gia_spin.setDecimals(0)
+        don_gia_spin.setRange(100, 10000)
+        don_gia_spin.setValue(1500 + (bac_index - 1) * 200)  # Giá trị mặc định tăng dần theo bậc
         don_gia_spin.setSuffix(" đ/kWh")
-        don_gia_spin.setMinimumWidth(150)
+        don_gia_spin.setDecimals(0)
         
-        # Label phạm vi
-        if bac_so == 1:
-            range_label = QLabel("Từ 0 đến:")
-        else:
-            previous_limit = self.bac_thang_inputs[-1][0].value()
-            range_label = QLabel(f"Từ {int(previous_limit) + 1} đến:")
-        
-        range_label.setFixedWidth(80)
-        
-        # Nút xóa bậc thang
+        # Nút xóa
         delete_button = QPushButton("Xóa")
-        delete_button.setObjectName("deleteButton")
         delete_button.setIcon(QIcon.fromTheme("delete"))
-        delete_button.clicked.connect(lambda: self.on_delete_bac_thang(bac_frame))
-        delete_button.setFixedWidth(60)
+        delete_button.setStyleSheet("""
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            min-width: 60px;
+        """)
         
-        # Thêm các trường vào layout
-        bac_layout.addWidget(range_label)
+        # Kết nối sự kiện xóa
+        delete_button.clicked.connect(lambda: self.remove_bac_thang(bac_frame))
+        
+        # Thêm các widget vào layout
+        bac_layout.addWidget(bac_label)
+        bac_layout.addWidget(kwh_label)
         bac_layout.addWidget(kwh_max_spin)
-        bac_layout.addWidget(QLabel("Đơn giá:"))
+        bac_layout.addWidget(don_gia_label)
         bac_layout.addWidget(don_gia_spin)
-        bac_layout.addStretch()
         bac_layout.addWidget(delete_button)
         
-        # Thêm vào layout chính
-        self.bac_thang_layout.insertWidget(self.bac_thang_layout.count() - 1, bac_frame)
+        # Thêm vào container
+        self.bac_thang_container.addWidget(bac_frame)
         
-        # Lưu lại các trường nhập liệu
-        self.bac_thang_inputs.append((kwh_max_spin, don_gia_spin, bac_frame))
+        # Lưu tham chiếu
+        self.bac_thang_inputs.append((bac_frame, kwh_max_spin, don_gia_spin, delete_button))
+        
+        # Cập nhật trạng thái của nút xóa (nếu chỉ còn 1 bậc thì không cho xóa)
+        self.update_delete_buttons()
     
-    def on_add_bac_thang(self):
-        """Xử lý sự kiện khi thêm bậc thang mới"""
-        bac_so = len(self.bac_thang_inputs) + 1
-        
-        # Nếu đã có bậc thang, lấy giá trị kWh max của bậc cuối cùng
-        default_kwh_max = 100
-        if self.bac_thang_inputs:
-            last_kwh_max = self.bac_thang_inputs[-1][0].value()
-            default_kwh_max = last_kwh_max + 100
-        
-        self.add_bac_thang_ui(bac_so, default_kwh_max, 1000)
-    
-    def on_delete_bac_thang(self, frame):
-        """
-        Xử lý sự kiện khi xóa bậc thang
-        
-        Args:
-            frame (QFrame): Frame cần xóa
-        """
-        if len(self.bac_thang_inputs) <= 1:
-            QMessageBox.warning(self, "Cảnh báo", "Cần có ít nhất một bậc thang giá!")
-            return
-        
-        # Tìm và xóa phần tử tương ứng
-        for i, (_, _, box) in enumerate(self.bac_thang_inputs):
-            if box == frame:
+    def remove_bac_thang(self, bac_frame):
+        """Xóa một bậc thang khỏi form"""
+        # Tìm index của bậc cần xóa
+        for i, (frame, _, _, _) in enumerate(self.bac_thang_inputs):
+            if frame == bac_frame:
+                # Xóa khỏi layout và danh sách
+                self.bac_thang_container.removeWidget(frame)
+                frame.deleteLater()
                 self.bac_thang_inputs.pop(i)
                 break
         
-        # Xóa khỏi UI
-        frame.deleteLater()
+        # Cập nhật lại các nhãn bậc
+        for i, (_, _, _, _) in enumerate(self.bac_thang_inputs):
+            # Tìm label bậc thang trong frame
+            bac_label = self.bac_thang_inputs[i][0].layout().itemAt(0).widget()
+            bac_label.setText(f"Bậc {i+1}:")
         
-        # Cập nhật lại các label phạm vi
-        for i, (kwh_spin, _, box) in enumerate(self.bac_thang_inputs):
-            layout = box.layout()
-            bac_label = layout.itemAt(0).widget()
-            range_label = layout.itemAt(1).widget()
-            
-            # Cập nhật label bậc
-            bac_label.setText(f"Bậc {i+1}")
-            
-            # Cập nhật label phạm vi
-            if i == 0:
-                range_label.setText("Từ 0 đến:")
-            else:
-                previous_limit = self.bac_thang_inputs[i-1][0].value()
-                range_label.setText(f"Từ {int(previous_limit) + 1} đến:")
+        # Cập nhật trạng thái của nút xóa
+        self.update_delete_buttons()
+    
+    def update_delete_buttons(self):
+        """Cập nhật trạng thái của các nút xóa"""
+        # Nếu chỉ còn 1 bậc thì không cho xóa
+        can_delete = len(self.bac_thang_inputs) > 1
+        
+        # Cập nhật trạng thái của tất cả các nút
+        for _, _, _, delete_button in self.bac_thang_inputs:
+            delete_button.setEnabled(can_delete)
     
     def get_bang_gia_data(self):
         """
@@ -434,7 +407,7 @@ class BangGiaTab(QWidget):
         header_layout = QHBoxLayout(header_frame)
         
         header_label = QLabel("QUẢN LÝ BẢNG GIÁ ĐIỆN")
-        header_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        header_label.setFont(QFont("Roboto", 12, QFont.Weight.Bold))
         header_label.setStyleSheet("color: white;")
         header_layout.addWidget(header_label)
         
@@ -442,34 +415,42 @@ class BangGiaTab(QWidget):
         
         # Panel chức năng
         tools_frame = QFrame()
-        tools_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        tools_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 6px;")
         tools_layout = QHBoxLayout(tools_frame)
         tools_layout.setContentsMargins(15, 10, 15, 10)
         
         # Tiêu đề panel
         tools_label = QLabel("Thao tác:")
-        tools_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        tools_label.setFont(QFont("Roboto", 10, QFont.Weight.Bold))
+        tools_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT};")
         tools_layout.addWidget(tools_label)
         
         # Các nút chức năng
         self.add_button = QPushButton("Thêm bảng giá mới")
-        self.add_button.setIcon(QIcon.fromTheme("add"))
+        self.add_button.setIcon(QIcon("../assets/icons/add.svg"))
         
         self.history_button = QPushButton("Lịch sử bảng giá")
-        self.history_button.setIcon(QIcon.fromTheme("history"))
+        self.history_button.setIcon(QIcon("../assets/icons/history.svg"))
         
         self.refresh_button = QPushButton("Làm mới")
-        self.refresh_button.setIcon(QIcon.fromTheme("refresh"))
+        self.refresh_button.setIcon(QIcon("../assets/icons/refresh.svg"))
         
         for btn in [self.add_button, self.history_button, self.refresh_button]:
             btn.setStyleSheet(f"""
-                background-color: {VTN_YELLOW};
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 15px;
-                font-weight: bold;
-                min-width: 100px;
+                QPushButton {{
+                    background-color: {VTN_YELLOW};
+                    color: {VTN_DARK_BG};
+                    border: none;
+                    border-radius: 4px;
+                    padding: 8px 15px;
+                    font-weight: bold;
+                    min-width: 100px;
+                    font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+                    
+                }}
+                QPushButton:hover {{
+                    background-color: {VTN_YELLOW_HOVER};
+                }}
             """)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
         
@@ -482,11 +463,11 @@ class BangGiaTab(QWidget):
         
         # Khu vực hiển thị bảng giá
         content_frame = QFrame()
-        content_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        content_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 6px;")
         content_layout = QVBoxLayout(content_frame)
         
         self.current_price_label = QLabel("BẢNG GIÁ HIỆN TẠI")
-        self.current_price_label.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        self.current_price_label.setFont(QFont("Roboto", 11, QFont.Weight.Bold))
         self.current_price_label.setStyleSheet(f"color: {VTN_ORANGE}; padding: 5px;")
         content_layout.addWidget(self.current_price_label)
         
@@ -497,20 +478,30 @@ class BangGiaTab(QWidget):
         self.current_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.current_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.current_table.setAlternatingRowColors(True)
-        self.current_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #ddd;
+        self.current_table.setStyleSheet(f"""
+            QTableWidget {{
+                border: 1px solid {VTN_GRAY_BORDER};
                 border-radius: 4px;
-                background-color: white;
-                gridline-color: #f0f0f0;
-            }
-            QTableWidget::item {
+                background-color: {VTN_DARK_BG};
+                gridline-color: {VTN_GRAY_BORDER};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto', 'Arial', sans-serif;
+            }}
+            QTableWidget::item {{
                 padding: 5px;
-            }
-            QTableWidget::item:selected {
-                background-color: #FFB300;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {VTN_YELLOW};
                 color: white;
-            }
+            }}
+            QHeaderView::section {{
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_YELLOW};
+                padding: 5px;
+                border: 1px solid {VTN_GRAY_BORDER};
+                font-weight: bold;
+                font-family: 'Roboto', 'Arial', sans-serif;
+            }}
         """)
         content_layout.addWidget(self.current_table)
         
@@ -519,10 +510,10 @@ class BangGiaTab(QWidget):
         info_layout = QHBoxLayout(self.current_info_frame)
         
         self.current_date_label = QLabel("Ngày áp dụng: --/--/----")
-        self.current_date_label.setStyleSheet("font-weight: bold;")
+        self.current_date_label.setStyleSheet(f"font-weight: bold; color: {VTN_LIGHT_TEXT}; font-family: 'Roboto', 'Arial', sans-serif;")
         
         self.current_vat_label = QLabel("Thuế VAT: 10%")
-        self.current_vat_label.setStyleSheet("font-weight: bold;")
+        self.current_vat_label.setStyleSheet(f"font-weight: bold; color: {VTN_LIGHT_TEXT}; font-family: 'Roboto', 'Arial', sans-serif;")
         
         info_layout.addWidget(self.current_date_label)
         info_layout.addStretch()
@@ -532,7 +523,7 @@ class BangGiaTab(QWidget):
         
         # Bảng hiển thị lịch sử bảng giá
         self.history_label = QLabel("LỊCH SỬ BẢNG GIÁ")
-        self.history_label.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        self.history_label.setFont(QFont("Roboto", 11, QFont.Weight.Bold))
         self.history_label.setStyleSheet(f"color: {VTN_ORANGE}; padding: 5px;")
         self.history_label.setVisible(False)
         content_layout.addWidget(self.history_label)
@@ -543,20 +534,30 @@ class BangGiaTab(QWidget):
         self.history_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.history_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.history_table.setAlternatingRowColors(True)
-        self.history_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #ddd;
+        self.history_table.setStyleSheet(f"""
+            QTableWidget {{
+                border: 1px solid {VTN_GRAY_BORDER};
                 border-radius: 4px;
-                background-color: white;
-                gridline-color: #f0f0f0;
-            }
-            QTableWidget::item {
+                background-color: {VTN_DARK_BG};
+                gridline-color: {VTN_GRAY_BORDER};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto', 'Arial', sans-serif;
+            }}
+            QTableWidget::item {{
                 padding: 5px;
-            }
-            QTableWidget::item:selected {
-                background-color: #FFB300;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {VTN_YELLOW};
                 color: white;
-            }
+            }}
+            QHeaderView::section {{
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_YELLOW};
+                padding: 5px;
+                border: 1px solid {VTN_GRAY_BORDER};
+                font-weight: bold;
+                font-family: 'Roboto', 'Arial', sans-serif;
+            }}
         """)
         self.history_table.setVisible(False)
         content_layout.addWidget(self.history_table)
@@ -570,7 +571,14 @@ class BangGiaTab(QWidget):
     
     def load_data(self):
         """Tải dữ liệu bảng giá hiện hành"""
-        self.load_current_bang_gia()
+        try:
+            self.load_current_bang_gia()
+            
+            # Nếu đang hiển thị lịch sử, cập nhật lịch sử bảng giá
+            if self.history_table.isVisible():
+                self.load_bang_gia_history()
+        except Exception as e:
+            QMessageBox.warning(self, "Lỗi", f"Không thể tải dữ liệu bảng giá: {str(e)}")
     
     def load_current_bang_gia(self):
         """Tải thông tin bảng giá hiện hành"""

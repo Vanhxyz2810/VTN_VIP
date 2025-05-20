@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                            QLabel, QTableWidget, QTableWidgetItem, QLineEdit,
                            QFormLayout, QDialog, QMessageBox, QHeaderView,
@@ -17,6 +18,14 @@ VTN_YELLOW = "#FFB300"  # Màu vàng chính
 VTN_ORANGE = "#FF9800"  # Màu cam
 VTN_BACKGROUND = "#FFFDE7"  # Màu nền nhạt
 VTN_TEXT = "#212121"  # Màu chữ
+VTN_DARK_BG = "#121212"  # Màu nền tối
+VTN_DARKER_BG = "#1E1E1E"  # Màu nền tối hơn cho các panel
+VTN_LIGHT_TEXT = "#EEEEEE"  # Màu chữ sáng
+VTN_ACCENT = "#FFC107"  # Màu nhấn
+VTN_RED = "#D32F2F"  # Màu đỏ cho nút xóa
+VTN_RED_HOVER = "#B71C1C"  # Màu đỏ đậm hơn khi hover
+VTN_YELLOW_HOVER = "#FFA000"  # Màu vàng đậm hơn khi hover
+VTN_GRAY_BORDER = "#555555"  # Màu viền xám đậm
 
 class HoaDonDialog(QDialog):
     """
@@ -46,37 +55,42 @@ class HoaDonDialog(QDialog):
         self.setMinimumWidth(500)
         self.setStyleSheet(f"""
             QDialog {{
-                background-color: {VTN_BACKGROUND};
-                border-radius: 8px;
+                background-color: {VTN_DARK_BG};
+                border-radius: 10px;
             }}
             QLabel {{
                 font-weight: bold;
-                color: {VTN_TEXT};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI Semibold', 'Arial', sans-serif;
             }}
             QLineEdit, QComboBox, QSpinBox, QDateEdit {{
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: white;
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
+                padding: 10px;
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
             }}
             QPushButton {{
                 background-color: {VTN_YELLOW};
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 8px 15px;
+                border-radius: 6px;
+                padding: 10px 18px;
                 font-weight: bold;
-                min-width: 100px;
+                min-width: 110px;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
             }}
             QPushButton:hover {{
-                background-color: {VTN_ORANGE};
+                background-color: {VTN_YELLOW_HOVER};
             }}
             QGroupBox {{
                 font-weight: bold;
-                border: 1px solid #ddd;
-                border-radius: 6px;
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 8px;
                 margin-top: 12px;
-                background-color: white;
+                background-color: {VTN_DARKER_BG};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
             }}
             QGroupBox::title {{
                 subcontrol-origin: margin;
@@ -93,11 +107,11 @@ class HoaDonDialog(QDialog):
         
         # Header
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 6px;")
+        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 8px;")
         header_layout = QHBoxLayout(header_frame)
         
         header_label = QLabel(title)
-        header_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        header_label.setFont(QFont("Roboto", 14, QFont.Weight.Bold))
         header_label.setStyleSheet("color: white;")
         header_layout.addWidget(header_label)
         
@@ -105,7 +119,7 @@ class HoaDonDialog(QDialog):
         
         # Form chính
         form_frame = QFrame()
-        form_frame.setStyleSheet("background-color: white; border-radius: 6px; padding: 10px;")
+        form_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 6px; padding: 10px;")
         form_layout = QVBoxLayout(form_frame)
         
         # Thông tin cơ bản
@@ -176,7 +190,7 @@ class HoaDonDialog(QDialog):
         payment_layout.setContentsMargins(0, 0, 0, 0)
         
         self.da_thanh_toan_check = QCheckBox("Đã thanh toán")
-        self.da_thanh_toan_check.setStyleSheet("font-weight: bold;")
+        self.da_thanh_toan_check.setStyleSheet("font-weight: bold; color: white;")
         payment_layout.addWidget(self.da_thanh_toan_check)
         
         # Ngày thanh toán
@@ -232,8 +246,8 @@ class HoaDonDialog(QDialog):
         self.save_button = QPushButton("Lưu")
         self.cancel_button = QPushButton("Hủy")
         self.cancel_button.setStyleSheet(f"""
-            background-color: #f0f0f0; 
-            color: {VTN_TEXT};
+            background-color: #555; 
+            color: {VTN_LIGHT_TEXT};
         """)
         
         button_layout.addStretch()
@@ -331,11 +345,11 @@ class HoaDonTab(QWidget):
         
         # Header
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 6px;")
+        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 8px;")
         header_layout = QHBoxLayout(header_frame)
         
         header_label = QLabel("QUẢN LÝ HÓA ĐƠN TIỀN ĐIỆN")
-        header_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        header_label.setFont(QFont("Roboto Medium", 12, QFont.Weight.Bold))
         header_label.setStyleSheet("color: white;")
         header_layout.addWidget(header_label)
         
@@ -343,126 +357,157 @@ class HoaDonTab(QWidget):
         
         # Panel tìm kiếm và lọc
         search_frame = QFrame()
-        search_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        search_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px;")
         search_layout = QHBoxLayout(search_frame)
-        search_layout.setContentsMargins(15, 10, 15, 10)
+        search_layout.setContentsMargins(15, 12, 15, 12)
         
         # Tìm kiếm
         search_label = QLabel("Tìm kiếm:")
-        search_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        search_label.setFont(QFont("Roboto Medium", 10, QFont.Weight.Bold))
+        search_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT};")
         
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Nhập mã hóa đơn hoặc tên khách hàng...")
-        self.search_input.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #f9f9f9;
-            }
+        self.search_input.setStyleSheet(f"""
+            QLineEdit {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
+                padding: 10px 15px;
+
+                background-color: {VTN_DARK_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QLineEdit::placeholder {{
+                color: #888888;
+            }}
         """)
+        # self.search_input.setFixedWidth(450)
         
         self.search_button = QPushButton("Tìm")
-        self.search_button.setIcon(QIcon.fromTheme("search"))
+        self.search_button.setIcon(QIcon("../assets/icons/search.svg"))
         self.search_button.setStyleSheet(f"""
-            background-color: {VTN_YELLOW};
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
-            font-weight: bold;
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 6px;
+                padding: 10px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
         """)
+        self.search_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
-        # Bộ lọc
+        # Lọc theo trạng thái thanh toán
         filter_label = QLabel("Lọc:")
-        filter_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        filter_label.setFont(QFont("Roboto Medium", 10, QFont.Weight.Bold))
+        filter_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT};")
         
-        self.thang_combo = QComboBox()
-        self.thang_combo.addItem("Tất cả các tháng", 0)
-        for i in range(1, 13):
-            self.thang_combo.addItem(f"Tháng {i}", i)
-        
-        self.nam_combo = QComboBox()
-        current_year = datetime.datetime.now().year
-        self.nam_combo.addItem("Tất cả các năm", 0)
-        for year in range(current_year - 5, current_year + 6):
-            self.nam_combo.addItem(f"Năm {year}", year)
-        
-        self.thanh_toan_combo = QComboBox()
-        self.thanh_toan_combo.addItem("Tất cả", -1)
-        self.thanh_toan_combo.addItem("Đã thanh toán", 1)
-        self.thanh_toan_combo.addItem("Chưa thanh toán", 0)
-        
-        self.filter_button = QPushButton("Áp dụng")
-        self.filter_button.setIcon(QIcon.fromTheme("filter"))
-        self.filter_button.setStyleSheet(f"""
-            background-color: {VTN_ORANGE};
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
-            font-weight: bold;
+        self.filter_combo = QComboBox()
+        self.filter_combo.addItems(["Tất cả", "Đã thanh toán", "Chưa thanh toán"])
+        self.filter_combo.setStyleSheet(f"""
+            border: 1px solid {VTN_GRAY_BORDER};
+            border-radius: 6px;
+            padding: 8px;
+            background-color: {VTN_DARK_BG};
+            color: {VTN_LIGHT_TEXT};
+            font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
         """)
+        self.filter_combo.setFixedWidth(130)
+        self.filter_button = QPushButton("Lọc")
+        self.filter_button.setIcon(QIcon("../assets/icons/filter.svg"))
+        self.filter_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 6px;
+                padding: 10px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
+        """)
+        self.filter_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         search_layout.addWidget(search_label)
-        search_layout.addWidget(self.search_input, 1)
+        search_layout.addWidget(self.search_input)
         search_layout.addWidget(self.search_button)
         search_layout.addSpacing(20)
         search_layout.addWidget(filter_label)
-        search_layout.addWidget(self.thang_combo)
-        search_layout.addWidget(self.nam_combo)
-        search_layout.addWidget(self.thanh_toan_combo)
+        search_layout.addWidget(self.filter_combo)
         search_layout.addWidget(self.filter_button)
         
         layout.addWidget(search_frame)
         
         # Panel chức năng
         tools_frame = QFrame()
-        tools_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        tools_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px;")
         tools_layout = QHBoxLayout(tools_frame)
-        tools_layout.setContentsMargins(15, 10, 15, 10)
+        tools_layout.setContentsMargins(15, 12, 15, 12)
         
         # Tiêu đề panel
         tools_label = QLabel("Thao tác:")
-        tools_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        tools_label.setFont(QFont("Roboto Medium", 10, QFont.Weight.Bold))
+        tools_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT};")
         tools_layout.addWidget(tools_label)
         
         # Các nút chức năng
         self.add_button = QPushButton("Thêm hóa đơn")
-        self.add_button.setIcon(QIcon.fromTheme("add"))
+        self.add_button.setIcon(QIcon("../assets/icons/add.svg"))
         
         self.edit_button = QPushButton("Sửa")
-        self.edit_button.setIcon(QIcon.fromTheme("edit"))
+        self.edit_button.setIcon(QIcon("../assets/icons/edit.svg"))
         
         self.delete_button = QPushButton("Xóa")
-        self.delete_button.setIcon(QIcon.fromTheme("delete"))
+        self.delete_button.setIcon(QIcon("../assets/icons/delete.svg"))
         
         self.print_button = QPushButton("In hóa đơn")
-        self.print_button.setIcon(QIcon.fromTheme("print"))
+        self.print_button.setIcon(QIcon("../assets/icons/print.svg"))
         
         self.refresh_button = QPushButton("Làm mới")
-        self.refresh_button.setIcon(QIcon.fromTheme("refresh"))
+        self.refresh_button.setIcon(QIcon("../assets/icons/refresh.svg"))
         
         for btn in [self.add_button, self.edit_button, self.print_button, self.refresh_button]:
             btn.setStyleSheet(f"""
-                background-color: {VTN_YELLOW};
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 15px;
-                font-weight: bold;
-                min-width: 100px;
+                QPushButton {{
+                    background-color: {VTN_YELLOW};
+                    color: {VTN_DARK_BG};
+                    border: none;
+                    border-radius: 6px;
+                    padding: 10px 15px;
+                    font-weight: bold;
+                    min-width: 110px;
+                    font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+                }}
+                QPushButton:hover {{
+                    background-color: {VTN_YELLOW_HOVER};
+                }}
             """)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
         
         self.delete_button.setStyleSheet(f"""
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
-            font-weight: bold;
+            QPushButton {{
+                background-color: {VTN_RED};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 15px;
+                font-weight: bold;
+                min-width: 110px;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_RED_HOVER};
+            }}
         """)
+        self.delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         tools_layout.addStretch()
         tools_layout.addWidget(self.add_button)
@@ -475,11 +520,11 @@ class HoaDonTab(QWidget):
         
         # Bảng hiển thị danh sách hóa đơn
         table_frame = QFrame()
-        table_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        table_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px;")
         table_layout = QVBoxLayout(table_frame)
         
         table_header = QLabel("Danh sách hóa đơn")
-        table_header.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        table_header.setFont(QFont("Roboto Medium", 11, QFont.Weight.Bold))
         table_header.setStyleSheet(f"color: {VTN_ORANGE}; padding: 5px;")
         table_layout.addWidget(table_header)
         
@@ -494,20 +539,31 @@ class HoaDonTab(QWidget):
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
-        self.table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #ddd;
+        self.table.setStyleSheet(f"""
+            QTableWidget {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 8px;
+                background-color: {VTN_DARK_BG};
+                gridline-color: {VTN_GRAY_BORDER};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QTableWidget::item {{
+                padding: 8px;
                 border-radius: 4px;
-                background-color: white;
-                gridline-color: #f0f0f0;
-            }
-            QTableWidget::item {
-                padding: 5px;
-            }
-            QTableWidget::item:selected {
-                background-color: #FFB300;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {VTN_YELLOW};
                 color: white;
-            }
+            }}
+            QHeaderView::section {{
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_YELLOW};
+                padding: 8px;
+                border: 1px solid {VTN_GRAY_BORDER};
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
         """)
         
         table_layout.addWidget(self.table)
@@ -525,39 +581,64 @@ class HoaDonTab(QWidget):
     
     def load_data(self):
         """Tải dữ liệu hóa đơn vào bảng"""
-        # Lấy danh sách hóa đơn
-        hoa_don_list = self.db.get_all_hoa_don()
-        
-        # Xóa dữ liệu cũ
-        self.table.setRowCount(0)
-        
-        # Thêm dữ liệu từ database
-        for row, hoa_don in enumerate(hoa_don_list):
-            self.table.insertRow(row)
-            self.table.setItem(row, 0, QTableWidgetItem(hoa_don.ma_hoa_don))  # Mã HĐ
+        try:
+            # Lấy danh sách hóa đơn
+            hoa_don_list = self.db.get_all_hoa_don()
             
-            # Lấy thông tin khách hàng
-            khach_hang = self.db.get_khach_hang(hoa_don.ma_khach_hang)
-            ten_khach_hang = khach_hang.ho_ten if khach_hang else "Không xác định"
-            self.table.setItem(row, 1, QTableWidgetItem(ten_khach_hang))  # Tên KH
+            # Xóa dữ liệu cũ
+            self.table.setRowCount(0)
             
-            self.table.setItem(row, 2, QTableWidgetItem(f"{hoa_don.thang}/{hoa_don.nam}"))  # Tháng/Năm
-            self.table.setItem(row, 3, QTableWidgetItem(str(hoa_don.chi_so_dau)))  # Chỉ số đầu
-            self.table.setItem(row, 4, QTableWidgetItem(str(hoa_don.chi_so_cuoi)))  # Chỉ số cuối
-            
-            # Tính lượng tiêu thụ
-            tieu_thu = hoa_don.chi_so_cuoi - hoa_don.chi_so_dau
-            self.table.setItem(row, 5, QTableWidgetItem(str(tieu_thu)))  # Tiêu thụ
-            
-            # Định dạng số tiền (hiển thị số nguyên, không có phần thập phân)
-            so_tien = f"{int(hoa_don.so_tien):,} VNĐ" if hoa_don.so_tien else "Chưa tính"
-            self.table.setItem(row, 6, QTableWidgetItem(so_tien))  # Số tiền
-            
-            # Trạng thái
-            trang_thai = "Đã thanh toán" if hoa_don.da_thanh_toan else "Chưa thanh toán"
-            trang_thai_item = QTableWidgetItem(trang_thai)
-            trang_thai_item.setForeground(Qt.GlobalColor.darkGreen if hoa_don.da_thanh_toan else Qt.GlobalColor.darkRed)
-            self.table.setItem(row, 7, trang_thai_item)
+            # Thêm dữ liệu từ database
+            for row, hoa_don in enumerate(hoa_don_list):
+                self.table.insertRow(row)
+                self.table.setItem(row, 0, QTableWidgetItem(hoa_don.ma_hoa_don))  # Mã HĐ
+                
+                # Lấy thông tin khách hàng
+                khach_hang = self.db.get_khach_hang(hoa_don.ma_khach_hang)
+                ten_khach_hang = khach_hang.ho_ten if khach_hang else "Không xác định"
+                self.table.setItem(row, 1, QTableWidgetItem(ten_khach_hang))  # Tên KH
+                
+                self.table.setItem(row, 2, QTableWidgetItem(f"{hoa_don.thang}/{hoa_don.nam}"))  # Tháng/Năm
+                self.table.setItem(row, 3, QTableWidgetItem(str(hoa_don.chi_so_dau)))  # Chỉ số đầu
+                self.table.setItem(row, 4, QTableWidgetItem(str(hoa_don.chi_so_cuoi)))  # Chỉ số cuối
+                
+                # Tính lượng tiêu thụ
+                tieu_thu = hoa_don.chi_so_cuoi - hoa_don.chi_so_dau
+                self.table.setItem(row, 5, QTableWidgetItem(str(tieu_thu)))  # Tiêu thụ
+                
+                # Định dạng số tiền (hiển thị số nguyên, không có phần thập phân)
+                so_tien = f"{int(hoa_don.so_tien):,} VNĐ" if hoa_don.so_tien else "Chưa tính"
+                self.table.setItem(row, 6, QTableWidgetItem(so_tien))  # Số tiền
+                
+                # Trạng thái
+                trang_thai = "Đã thanh toán" if hoa_don.da_thanh_toan else "Chưa thanh toán"
+                trang_thai_item = QTableWidgetItem(trang_thai)
+                
+                # Đặt màu cho trạng thái
+                if hoa_don.da_thanh_toan:
+                    trang_thai_item.setForeground(QColor("#4CAF50"))  # Xanh lá - đã thanh toán
+                else:
+                    trang_thai_item.setForeground(QColor(VTN_RED))  # Đỏ - chưa thanh toán
+                    
+                self.table.setItem(row, 7, trang_thai_item)
+                
+                # Căn chỉnh các cột
+                # Căn giữa: Mã HĐ, Tháng/Năm
+                self.table.item(row, 0).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.table.item(row, 2).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+                # Căn phải: Chỉ số đầu, Chỉ số cuối, Tiêu thụ, Số tiền
+                for col in [3, 4, 5, 6]:
+                    self.table.item(row, col).setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                
+                # Căn giữa: Trạng thái
+                self.table.item(row, 7).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                
+            # Reset bộ lọc và tìm kiếm
+            self.search_input.clear()
+            self.filter_combo.setCurrentIndex(0)
+        except Exception as e:
+            QMessageBox.warning(self, "Lỗi", f"Không thể tải dữ liệu hóa đơn: {str(e)}")
     
     def add_hoa_don(self):
         """Thêm hóa đơn mới"""
@@ -685,33 +766,34 @@ class HoaDonTab(QWidget):
         """Tìm kiếm hóa đơn"""
         keyword = self.search_input.text().strip()
         
+        # Lấy trạng thái lọc hiện tại
+        filter_status = self.filter_combo.currentText()
+        
         if not keyword:
-            self.load_data()
+            # Nếu không có từ khóa, áp dụng bộ lọc trạng thái
+            self.apply_filter()
             return
         
-        # Xử lý filter theo tháng và năm
-        thang_index = self.thang_combo.currentIndex()
-        nam_text = self.nam_combo.currentText()
-        
-        thang = None if thang_index == 0 else thang_index
-        
-        # Xử lý chuỗi nam_text để trích xuất số năm
-        if nam_text == "Tất cả năm":
-            nam = None
-        else:
-            # Trích xuất số năm từ chuỗi (ví dụ: "Nam 2021" -> 2021)
-            import re
-            nam_match = re.search(r'\d{4}', nam_text)
-            nam = int(nam_match.group()) if nam_match else None
-        
         # Tìm kiếm
-        hoa_don_list = self.db.search_hoa_don(keyword, thang, nam)
+        hoa_don_list = self.db.search_hoa_don(keyword)
+        
+        # Lọc theo trạng thái thanh toán nếu không phải "Tất cả"
+        filtered_hoa_don_list = []
+        for hd in hoa_don_list:
+            # Lọc theo trạng thái thanh toán
+            if filter_status == "Đã thanh toán" and not hd.da_thanh_toan:
+                continue
+            if filter_status == "Chưa thanh toán" and hd.da_thanh_toan:
+                continue
+            
+            # Thêm vào danh sách kết quả
+            filtered_hoa_don_list.append(hd)
         
         # Xóa dữ liệu cũ
         self.table.setRowCount(0)
         
         # Thêm dữ liệu mới
-        for row, hoa_don in enumerate(hoa_don_list):
+        for row, hoa_don in enumerate(filtered_hoa_don_list):
             self.table.insertRow(row)
             self.table.setItem(row, 0, QTableWidgetItem(hoa_don.ma_hoa_don))  # Mã HĐ
             
@@ -735,40 +817,39 @@ class HoaDonTab(QWidget):
             # Trạng thái
             trang_thai = "Đã thanh toán" if hoa_don.da_thanh_toan else "Chưa thanh toán"
             trang_thai_item = QTableWidgetItem(trang_thai)
-            trang_thai_item.setForeground(Qt.GlobalColor.darkGreen if hoa_don.da_thanh_toan else Qt.GlobalColor.darkRed)
+            trang_thai_item.setForeground(QColor("#4CAF50") if hoa_don.da_thanh_toan else QColor(VTN_RED))
             self.table.setItem(row, 7, trang_thai_item)
+            
+            # Căn chỉnh các cột
+            # Căn giữa: Mã HĐ, Tháng/Năm
+            self.table.item(row, 0).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.item(row, 2).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            # Căn phải: Chỉ số đầu, Chỉ số cuối, Tiêu thụ, Số tiền
+            for col in [3, 4, 5, 6]:
+                self.table.item(row, col).setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            
+            # Căn giữa: Trạng thái
+            self.table.item(row, 7).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
     
     def apply_filter(self):
         """Áp dụng bộ lọc"""
-        thang_index = self.thang_combo.currentIndex()
-        nam_text = self.nam_combo.currentText()
+        # Lấy giá trị của filter_combo
+        filter_status = self.filter_combo.currentText()
         
-        thang = None if thang_index == 0 else thang_index
-        
-        # Xử lý chuỗi nam_text để trích xuất số năm
-        if nam_text == "Tất cả năm":
-            nam = None
-        else:
-            # Trích xuất số năm từ chuỗi (ví dụ: "Nam 2021" -> 2021)
-            import re
-            nam_match = re.search(r'\d{4}', nam_text)
-            nam = int(nam_match.group()) if nam_match else None
-        
-        # Lọc hóa đơn theo tháng và năm
-        hoa_don_list = []
+        # Lấy tất cả hóa đơn
         all_hoa_don = self.db.get_all_hoa_don()
         
         # Áp dụng bộ lọc
+        hoa_don_list = []
         for hd in all_hoa_don:
-            # Lọc theo tháng nếu có
-            if thang and hd.thang != thang:
+            # Lọc theo trạng thái thanh toán
+            if filter_status == "Đã thanh toán" and not hd.da_thanh_toan:
+                continue
+            if filter_status == "Chưa thanh toán" and hd.da_thanh_toan:
                 continue
             
-            # Lọc theo năm nếu có
-            if nam and hd.nam != nam:
-                continue
-            
-            # Nếu vượt qua các điều kiện lọc, thêm vào danh sách kết quả
+            # Thêm vào danh sách kết quả
             hoa_don_list.append(hd)
         
         # Xóa dữ liệu cũ
@@ -799,8 +880,20 @@ class HoaDonTab(QWidget):
             # Trạng thái
             trang_thai = "Đã thanh toán" if hoa_don.da_thanh_toan else "Chưa thanh toán"
             trang_thai_item = QTableWidgetItem(trang_thai)
-            trang_thai_item.setForeground(Qt.GlobalColor.darkGreen if hoa_don.da_thanh_toan else Qt.GlobalColor.darkRed)
+            trang_thai_item.setForeground(QColor("#4CAF50") if hoa_don.da_thanh_toan else QColor(VTN_RED))
             self.table.setItem(row, 7, trang_thai_item)
+            
+            # Căn chỉnh các cột
+            # Căn giữa: Mã HĐ, Tháng/Năm
+            self.table.item(row, 0).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.item(row, 2).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            # Căn phải: Chỉ số đầu, Chỉ số cuối, Tiêu thụ, Số tiền
+            for col in [3, 4, 5, 6]:
+                self.table.item(row, col).setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            
+            # Căn giữa: Trạng thái
+            self.table.item(row, 7).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
     
     def print_hoa_don(self):
         """In hóa đơn được chọn dưới dạng PDF"""
@@ -817,45 +910,74 @@ class HoaDonTab(QWidget):
         ma_hoa_don = self.table.item(row_index, 0).text()
         
         # Lấy thông tin hóa đơn
-        hoa_don = self.db.get_hoa_don_by_id(ma_hoa_don)
+        hoa_don = self.db.get_hoa_don(ma_hoa_don)
         if not hoa_don:
             QMessageBox.warning(self, "Lỗi", f"Không tìm thấy thông tin hóa đơn {ma_hoa_don}.")
             return
         
         # Lấy thông tin khách hàng
-        khach_hang = self.db.get_khach_hang_by_id(hoa_don.ma_khach_hang)
+        khach_hang = self.db.get_khach_hang(hoa_don.ma_khach_hang)
         if not khach_hang:
             QMessageBox.warning(self, "Lỗi", f"Không tìm thấy thông tin khách hàng của hóa đơn {ma_hoa_don}.")
             return
         
         # Lấy thông tin bảng giá
-        bang_gia = self.db.get_bang_gia_by_date(hoa_don.thang, hoa_don.nam)
+        bang_gia = self.db.get_bang_gia_hien_hanh()
         if not bang_gia:
             QMessageBox.warning(self, "Lỗi", f"Không tìm thấy thông tin bảng giá cho hóa đơn {ma_hoa_don}.")
             return
         
+        # Kiểm tra tính hợp lệ của dữ liệu
+        if getattr(hoa_don, 'chi_so_dau', None) is None or getattr(hoa_don, 'chi_so_cuoi', None) is None:
+            QMessageBox.warning(self, "Lỗi", "Hóa đơn không có chỉ số đầu hoặc chỉ số cuối hợp lệ.")
+            return
+            
+        # Kiểm tra bậc thang của bảng giá
+        if not hasattr(bang_gia, 'bac_thang') or not bang_gia.bac_thang:
+            QMessageBox.warning(self, "Lỗi", "Bảng giá không có thông tin bậc thang hợp lệ.")
+            return
+        
         try:
-            # Import HoaDonPDF
-            from models.hoa_don_pdf import HoaDonPDF
+            # Import the function directly
+            from models.hoa_don_pdf import tao_hoa_don_pdf
             
-            # Tạo hóa đơn PDF
-            hoa_don_pdf = HoaDonPDF()
-            pdf_path = hoa_don_pdf.tao_hoa_don(hoa_don, khach_hang, bang_gia)
+            # Cập nhật thuộc tính tieu_thu của hóa đơn nếu chưa có
+            if not hasattr(hoa_don, 'tieu_thu') or hoa_don.tieu_thu is None:
+                hoa_don.tieu_thu = hoa_don.chi_so_cuoi - hoa_don.chi_so_dau
             
+            # Tạo hóa đơn PDF gọi trực tiếp hàm tiện ích
+            pdf_path = tao_hoa_don_pdf(hoa_don, khach_hang, bang_gia)
+            
+            # Kiểm tra nếu không tạo được file PDF
+            if pdf_path is None:
+                QMessageBox.warning(self, "Lỗi", "Không thể tạo file PDF. Vui lòng kiểm tra nhật ký lỗi.")
+                return
+                
+            # Kiểm tra file có tồn tại không
+            if not os.path.exists(pdf_path):
+                QMessageBox.warning(self, "Lỗi", f"Không tìm thấy file PDF được tạo tại đường dẫn: {pdf_path}")
+                return
+                
             # Hiển thị thông báo thành công
             QMessageBox.information(self, "Thành công", f"Đã xuất hóa đơn PDF thành công.\nVị trí: {pdf_path}")
             
             # Mở file PDF
-            import os
             import platform
             import subprocess
             
-            if platform.system() == 'Windows':
-                os.startfile(pdf_path)
-            elif platform.system() == 'Darwin':  # macOS
-                subprocess.run(['open', pdf_path])
-            else:  # Linux
-                subprocess.run(['xdg-open', pdf_path])
+            try:
+                if platform.system() == 'Windows':
+                    os.startfile(pdf_path)
+                elif platform.system() == 'Darwin':  # macOS
+                    subprocess.run(['open', pdf_path])
+                else:  # Linux
+                    subprocess.run(['xdg-open', pdf_path])
+            except Exception as e:
+                QMessageBox.warning(self, "Cảnh báo", f"Không thể mở file PDF. Lỗi: {str(e)}\nĐường dẫn file: {pdf_path}")
                 
+        except ImportError:
+            QMessageBox.critical(self, "Lỗi", "Không thể tìm thấy mô-đun tạo PDF. Vui lòng kiểm tra cài đặt.")
+        except TypeError as e:
+            QMessageBox.critical(self, "Lỗi dữ liệu", f"Lỗi kiểu dữ liệu khi tạo hóa đơn PDF: {str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "Lỗi", f"Lỗi khi tạo hóa đơn PDF: {str(e)}") 

@@ -16,6 +16,14 @@ VTN_YELLOW = "#FFB300"  # Màu vàng chính
 VTN_ORANGE = "#FF9800"  # Màu cam
 VTN_BACKGROUND = "#FFFDE7"  # Màu nền nhạt
 VTN_TEXT = "#212121"  # Màu chữ
+VTN_DARK_BG = "#121212"  # Màu nền tối
+VTN_DARKER_BG = "#1E1E1E"  # Màu nền tối hơn cho các panel
+VTN_LIGHT_TEXT = "#EEEEEE"  # Màu chữ sáng
+VTN_ACCENT = "#FFC107"  # Màu nhấn
+VTN_RED = "#D32F2F"  # Màu đỏ cho nút xóa
+VTN_RED_HOVER = "#B71C1C"  # Màu đỏ đậm hơn khi hover
+VTN_YELLOW_HOVER = "#FFA000"  # Màu vàng đậm hơn khi hover
+VTN_GRAY_BORDER = "#555555"  # Màu viền xám đậm
 
 class KhachHangDialog(QDialog):
     """
@@ -43,30 +51,34 @@ class KhachHangDialog(QDialog):
         self.setMinimumWidth(450)
         self.setStyleSheet(f"""
             QDialog {{
-                background-color: {VTN_BACKGROUND};
-                border-radius: 8px;
+                background-color: {VTN_DARK_BG};
+                border-radius: 10px;
             }}
             QLabel {{
                 font-weight: bold;
-                color: {VTN_TEXT};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI Semibold', 'Arial', sans-serif;
             }}
             QLineEdit {{
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: white;
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
+                padding: 10px;
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
             }}
             QPushButton {{
                 background-color: {VTN_YELLOW};
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 8px 15px;
+                border-radius: 6px;
+                padding: 10px 18px;
                 font-weight: bold;
-                min-width: 100px;
+                min-width: 110px;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
             }}
             QPushButton:hover {{
-                background-color: {VTN_ORANGE};
+                background-color: {VTN_YELLOW_HOVER};
             }}
             #headerLabel {{
                 color: {VTN_ORANGE};
@@ -82,12 +94,12 @@ class KhachHangDialog(QDialog):
         
         # Header
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 6px;")
+        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 8px;")
         header_layout = QHBoxLayout(header_frame)
         
         header_label = QLabel(title)
         header_label.setObjectName("headerLabel")
-        header_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        header_label.setFont(QFont("Roboto", 14, QFont.Weight.Bold))
         header_label.setStyleSheet("color: white;")
         header_layout.addWidget(header_label)
         
@@ -95,10 +107,10 @@ class KhachHangDialog(QDialog):
         
         # Form layout
         form_frame = QFrame()
-        form_frame.setStyleSheet("background-color: white; border-radius: 6px; padding: 10px;")
+        form_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px; padding: 15px;")
         form_layout = QFormLayout(form_frame)
-        form_layout.setSpacing(12)
-        form_layout.setContentsMargins(15, 15, 15, 15)
+        form_layout.setSpacing(15)
+        form_layout.setContentsMargins(20, 20, 20, 20)
         
         # Các trường nhập liệu
         self.ho_ten_input = QLineEdit()
@@ -129,9 +141,21 @@ class KhachHangDialog(QDialog):
         self.save_button = QPushButton("Lưu")
         self.cancel_button = QPushButton("Hủy")
         self.cancel_button.setStyleSheet(f"""
-            background-color: #f0f0f0; 
-            color: {VTN_TEXT};
+            QPushButton {{
+                background-color: #555; 
+                color: {VTN_LIGHT_TEXT};
+                border-radius: 6px;
+                padding: 10px 18px;
+                font-weight: bold;
+                min-width: 110px;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: #666;
+            }}
         """)
+        self.cancel_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.save_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         button_layout.addStretch()
         button_layout.addWidget(self.save_button)
@@ -191,11 +215,11 @@ class KhachHangTab(QWidget):
         
         # Header
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 6px;")
+        header_frame.setStyleSheet(f"background-color: {VTN_YELLOW}; border-radius: 8px;")
         header_layout = QHBoxLayout(header_frame)
         
         header_label = QLabel("QUẢN LÝ KHÁCH HÀNG")
-        header_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
+        header_label.setFont(QFont("Roboto", 12, QFont.Weight.Bold))
         header_label.setStyleSheet("color: white;")
         header_layout.addWidget(header_label)
         
@@ -203,32 +227,44 @@ class KhachHangTab(QWidget):
         
         # Panel tìm kiếm
         search_frame = QFrame()
-        search_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        search_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px;")
         search_layout = QHBoxLayout(search_frame)
-        search_layout.setContentsMargins(15, 10, 15, 10)
+        search_layout.setContentsMargins(15, 12, 15, 12)
         
         # Tìm kiếm
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Nhập tên, số điện thoại hoặc mã khách hàng...")
-        self.search_input.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 8px;
-                background-color: #f9f9f9;
-            }
+        self.search_input.setPlaceholderText("Nhập mã KH, tên khách hàng hoặc SĐT...")
+        self.search_input.setStyleSheet(f"""
+            QLineEdit {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 6px;
+                padding: 10px 12px;
+                background-color: {VTN_DARK_BG};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QLineEdit::placeholder {{
+                color: #888888;
+            }}
         """)
         
         self.search_button = QPushButton("Tìm kiếm")
-        self.search_button.setIcon(QIcon.fromTheme("search"))
+        self.search_button.setIcon(QIcon("../assets/icons/search.svg"))
         self.search_button.setStyleSheet(f"""
-            background-color: {VTN_YELLOW};
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
-            font-weight: bold;
+            QPushButton {{
+                background-color: {VTN_YELLOW};
+                color: {VTN_DARK_BG};
+                border: none;
+                border-radius: 6px;
+                padding: 10px 15px;
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_YELLOW_HOVER};
+            }}
         """)
+        self.search_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         search_layout.addWidget(self.search_input, 1)
         search_layout.addWidget(self.search_button)
@@ -237,48 +273,63 @@ class KhachHangTab(QWidget):
         
         # Panel chức năng
         tools_frame = QFrame()
-        tools_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        tools_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px;")
         tools_layout = QHBoxLayout(tools_frame)
-        tools_layout.setContentsMargins(15, 10, 15, 10)
+        tools_layout.setContentsMargins(15, 12, 15, 12)
         
         # Tiêu đề panel
         tools_label = QLabel("Thao tác:")
-        tools_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
+        tools_label.setFont(QFont("Roboto Medium", 10, QFont.Weight.Bold))
+        tools_label.setStyleSheet(f"color: {VTN_LIGHT_TEXT};")
         tools_layout.addWidget(tools_label)
         
         # Các nút chức năng
         self.add_button = QPushButton("Thêm mới")
-        self.add_button.setIcon(QIcon.fromTheme("add"))
+        self.add_button.setIcon(QIcon("../assets/icons/add.svg"))
         
         self.edit_button = QPushButton("Sửa")
-        self.edit_button.setIcon(QIcon.fromTheme("edit"))
+        self.edit_button.setIcon(QIcon("../assets/icons/edit.svg"))
         
         self.delete_button = QPushButton("Xóa")
-        self.delete_button.setIcon(QIcon.fromTheme("delete"))
+        self.delete_button.setIcon(QIcon("../assets/icons/delete.svg"))
         
         self.refresh_button = QPushButton("Làm mới")
-        self.refresh_button.setIcon(QIcon.fromTheme("refresh"))
+        self.refresh_button.setIcon(QIcon("../assets/icons/refresh.svg"))
         
-        for btn in [self.add_button, self.edit_button, self.delete_button, self.refresh_button]:
+        for btn in [self.add_button, self.edit_button, self.refresh_button]:
             btn.setStyleSheet(f"""
-                background-color: {VTN_YELLOW};
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 15px;
-                font-weight: bold;
-                min-width: 100px;
+                QPushButton {{
+                    background-color: {VTN_YELLOW};
+                    color: {VTN_DARK_BG};
+                    border: none;
+                    border-radius: 6px;
+                    padding: 10px 15px;
+                    font-weight: bold;
+                    min-width: 110px;
+                    font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+                }}
+                QPushButton:hover {{
+                    background-color: {VTN_YELLOW_HOVER};
+                }}
             """)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
         
         self.delete_button.setStyleSheet(f"""
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 15px;
-            font-weight: bold;
+            QPushButton {{
+                background-color: {VTN_RED};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 15px;
+                font-weight: bold;
+                min-width: 110px;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QPushButton:hover {{
+                background-color: {VTN_RED_HOVER};
+            }}
         """)
+        self.delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
         
         tools_layout.addStretch()
         tools_layout.addWidget(self.add_button)
@@ -290,11 +341,11 @@ class KhachHangTab(QWidget):
         
         # Bảng hiển thị danh sách khách hàng
         table_frame = QFrame()
-        table_frame.setStyleSheet("background-color: white; border-radius: 6px;")
+        table_frame.setStyleSheet(f"background-color: {VTN_DARKER_BG}; border-radius: 8px;")
         table_layout = QVBoxLayout(table_frame)
         
         table_header = QLabel("Danh sách khách hàng")
-        table_header.setFont(QFont("Arial", 11, QFont.Weight.Bold))
+        table_header.setFont(QFont("Roboto Medium", 11, QFont.Weight.Bold))
         table_header.setStyleSheet(f"color: {VTN_ORANGE}; padding: 5px;")
         table_layout.addWidget(table_header)
         
@@ -305,20 +356,31 @@ class KhachHangTab(QWidget):
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setAlternatingRowColors(True)
-        self.table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #ddd;
+        self.table.setStyleSheet(f"""
+            QTableWidget {{
+                border: 1px solid {VTN_GRAY_BORDER};
+                border-radius: 8px;
+                background-color: {VTN_DARK_BG};
+                gridline-color: {VTN_GRAY_BORDER};
+                color: {VTN_LIGHT_TEXT};
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
+            QTableWidget::item {{
+                padding: 8px;
                 border-radius: 4px;
-                background-color: white;
-                gridline-color: #f0f0f0;
-            }
-            QTableWidget::item {
-                padding: 5px;
-            }
-            QTableWidget::item:selected {
-                background-color: #FFB300;
+            }}
+            QTableWidget::item:selected {{
+                background-color: {VTN_YELLOW};
                 color: white;
-            }
+            }}
+            QHeaderView::section {{
+                background-color: {VTN_DARKER_BG};
+                color: {VTN_YELLOW};
+                padding: 8px;
+                border: 1px solid {VTN_GRAY_BORDER};
+                font-weight: bold;
+                font-family: 'Roboto Medium', 'Segoe UI', 'Arial', sans-serif;
+            }}
         """)
         
         table_layout.addWidget(self.table)
@@ -334,20 +396,31 @@ class KhachHangTab(QWidget):
     
     def load_data(self):
         """Tải dữ liệu khách hàng vào bảng"""
-        # Lấy danh sách khách hàng
-        khach_hang_list = self.db.get_all_khach_hang()
-        
-        # Xóa dữ liệu cũ
-        self.table.setRowCount(0)
-        
-        # Thêm dữ liệu mới
-        for row, kh in enumerate(khach_hang_list):
-            self.table.insertRow(row)
-            self.table.setItem(row, 0, QTableWidgetItem(kh.ma_khach_hang))
-            self.table.setItem(row, 1, QTableWidgetItem(kh.ho_ten))
-            self.table.setItem(row, 2, QTableWidgetItem(kh.dia_chi))
-            self.table.setItem(row, 3, QTableWidgetItem(kh.so_dien_thoai))
-            self.table.setItem(row, 4, QTableWidgetItem(kh.ma_cong_to))
+        try:
+            # Lấy danh sách khách hàng
+            khach_hang_list = self.db.get_all_khach_hang()
+            
+            # Xóa dữ liệu cũ
+            self.table.setRowCount(0)
+            
+            # Thêm dữ liệu mới
+            for row, kh in enumerate(khach_hang_list):
+                self.table.insertRow(row)
+                self.table.setItem(row, 0, QTableWidgetItem(kh.ma_khach_hang))
+                self.table.setItem(row, 1, QTableWidgetItem(kh.ho_ten))
+                self.table.setItem(row, 2, QTableWidgetItem(kh.dia_chi))
+                self.table.setItem(row, 3, QTableWidgetItem(kh.so_dien_thoai))
+                self.table.setItem(row, 4, QTableWidgetItem(kh.ma_cong_to))
+                
+                # Căn chỉnh: mã khách hàng và số điện thoại căn giữa
+                self.table.item(row, 0).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.table.item(row, 3).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.table.item(row, 4).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            # Xóa nội dung ô tìm kiếm
+            self.search_input.clear()
+        except Exception as e:
+            QMessageBox.warning(self, "Lỗi", f"Không thể tải dữ liệu khách hàng: {str(e)}")
     
     def add_khach_hang(self):
         """Thêm khách hàng mới"""
@@ -473,3 +546,8 @@ class KhachHangTab(QWidget):
             self.table.setItem(row, 2, QTableWidgetItem(kh.dia_chi))
             self.table.setItem(row, 3, QTableWidgetItem(kh.so_dien_thoai))
             self.table.setItem(row, 4, QTableWidgetItem(kh.ma_cong_to)) 
+            
+            # Căn chỉnh: mã khách hàng và số điện thoại căn giữa
+            self.table.item(row, 0).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.item(row, 3).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.item(row, 4).setTextAlignment(Qt.AlignmentFlag.AlignCenter) 
