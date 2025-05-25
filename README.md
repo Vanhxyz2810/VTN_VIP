@@ -13,6 +13,9 @@
 - 🖨️ **Xuất hóa đơn PDF**: Tạo hóa đơn chuyên nghiệp với đầy đủ thông tin
 - 💾 **Xuất dữ liệu JSON**: Dễ dàng tích hợp với các hệ thống khác
 - 🌙 **Giao diện hiện đại**: Hỗ trợ giao diện tối/sáng, thân thiện với người dùng
+- 🔐 **Hệ thống đăng nhập**: Bảo mật ứng dụng với hệ thống đăng nhập
+- 🔑 **Kích hoạt thiết bị**: Hỗ trợ kích hoạt thiết bị qua mã HWID
+- 💻 **Quản lý thiết bị**: Thêm, sửa, xóa thiết bị được phép sử dụng ứng dụng
 
 ## 📷 Hình ảnh demo
 
@@ -55,16 +58,29 @@ python desktop_app/main.py
 ## 📋 Cấu trúc dự án
 
 ```
-├── cmd_app/            # Phiên bản dòng lệnh
-├── desktop_app/        # Phiên bản giao diện đồ họa
-│   ├── gui/            # Các thành phần giao diện
-│   ├── main.py         # Điểm khởi đầu ứng dụng
-├── data/               # Nơi lưu trữ dữ liệu
-├── models/             # Các mô hình dữ liệu
-├── imgs/               # Hình ảnh sử dụng trong ứng dụng
-├── font/               # Font chữ
-├── requirements.txt    # Danh sách thư viện cần thiết
+├── cmd_app/                # Phiên bản dòng lệnh
+├── desktop_app/            # Phiên bản giao diện đồ họa
+│   ├── gui/                # Các thành phần giao diện
+│   │   ├── tabs/           # Các tab chức năng
+│   ├── utils/              # Tiện ích và xử lý
+│   ├── main.py             # Điểm khởi đầu ứng dụng
+├── data/                   # Nơi lưu trữ dữ liệu
+├── imgs/                   # Hình ảnh sử dụng trong ứng dụng
+├── font/                   # Font chữ
+├── login_form.py           # Hệ thống đăng nhập
+├── manage_device.py        # Quản lý thiết bị
+├── activate_device_flask.py# Kích hoạt thiết bị
+├── requirements.txt        # Danh sách thư viện cần thiết
 ```
+
+## 🔐 Hệ thống đăng nhập và kích hoạt
+
+Ứng dụng đã được bổ sung thêm hệ thống đăng nhập và kích hoạt thiết bị:
+
+- **Đăng nhập**: Đảm bảo chỉ người dùng được ủy quyền mới có thể truy cập vào ứng dụng
+- **Kích hoạt thiết bị**: Mỗi máy tính cần được kích hoạt với mã HWID duy nhất trước khi sử dụng
+- **Quản lý thiết bị**: Quản trị viên có thể quản lý danh sách thiết bị được phép sử dụng ứng dụng
+- **Lịch sử kích hoạt**: Theo dõi lịch sử kích hoạt của từng thiết bị
 
 ## 📝 Mẫu hóa đơn
 
