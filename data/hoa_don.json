@@ -1,57 +1,13 @@
 [
     {
-        "ma_hoa_don": "HD20250517181911",
-        "ma_khach_hang": "KH20250513163659",
-        "thang": 4,
-        "nam": 2025,
-        "chi_so_dau": 0,
-        "chi_so_cuoi": 3,
-        "da_thanh_toan": false,
-        "ngay_thanh_toan": null,
-        "so_tien": 5702
-    },
-    {
-        "ma_hoa_don": "HD20250517183141",
-        "ma_khach_hang": "KH20250513163659",
-        "thang": 5,
-        "nam": 2025,
-        "chi_so_dau": 3,
-        "chi_so_cuoi": 6,
-        "da_thanh_toan": false,
-        "ngay_thanh_toan": null,
-        "so_tien": 6547
-    },
-    {
-        "ma_hoa_don": "HD20250518193437",
-        "ma_khach_hang": "KH20250513163659",
+        "ma_hoa_don": "HD20250521032612",
+        "ma_khach_hang": "KH20250518210103",
         "thang": 5,
         "nam": 2025,
         "chi_so_dau": 0,
-        "chi_so_cuoi": 88,
-        "da_thanh_toan": true,
-        "ngay_thanh_toan": "2025-05-18T00:00:00",
-        "so_tien": 194810
-    },
-    {
-        "ma_hoa_don": "HD20250518194018",
-        "ma_khach_hang": "KH20250517175437",
-        "thang": 5,
-        "nam": 2025,
-        "chi_so_dau": 3,
-        "chi_so_cuoi": 1999,
+        "chi_so_cuoi": 23,
         "da_thanh_toan": false,
         "ngay_thanh_toan": null,
-        "so_tien": 1181950
-    },
-    {
-        "ma_hoa_don": "HD20250520022642",
-        "ma_khach_hang": "KH20250520022421",
-        "thang": 5,
-        "nam": 2025,
-        "chi_so_dau": 0,
-        "chi_so_cuoi": 1996,
-        "da_thanh_toan": false,
-        "ngay_thanh_toan": null,
-        "so_tien": 7258522
+        "so_tien": 50220
     }
 ]

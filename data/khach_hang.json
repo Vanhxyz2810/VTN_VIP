@@ -1,33 +1,5 @@
 [
     {
-        "ma_khach_hang": "KH20250513163659",
-        "ho_ten": "ttt5",
-        "dia_chi": "r",
-        "so_dien_thoai": "34",
-        "ma_cong_to": "4"
-    },
-    {
-        "ma_khach_hang": "KH20250517175437",
-        "ho_ten": "vanh3",
-        "dia_chi": "cc3",
-        "so_dien_thoai": "-3",
-        "ma_cong_to": "2392"
-    },
-    {
-        "ma_khach_hang": "KH20250518204550",
-        "ho_ten": "vanh22",
-        "dia_chi": "ccff",
-        "so_dien_thoai": "0304304",
-        "ma_cong_to": "3"
-    },
-    {
-        "ma_khach_hang": "KH20250518205112",
-        "ho_ten": "Vanh",
-        "dia_chi": "5",
-        "so_dien_thoai": "3",
-        "ma_cong_to": "3"
-    },
-    {
         "ma_khach_hang": "KH20250518210103",
         "ho_ten": "ádkljas",
         "dia_chi": "aljksd",
@@ -40,12 +12,5 @@
         "dia_chi": "aksldjas",
         "so_dien_thoai": "345345",
         "ma_cong_to": "45"
-    },
-    {
-        "ma_khach_hang": "KH20250520022421",
-        "ho_ten": "vảnheal",
-        "dia_chi": "ha tay",
-        "so_dien_thoai": "050505505",
-        "ma_cong_to": "39393"
     }
 ]
